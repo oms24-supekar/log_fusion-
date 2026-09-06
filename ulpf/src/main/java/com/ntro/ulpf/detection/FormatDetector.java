@@ -14,9 +14,9 @@ public class FormatDetector {
             "^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\\s+\\d{1,2}\\s+\\d{2}:\\d{2}:\\d{2}\\s+.+"
     );
 
-    private static final Pattern KEY_VALUE_PATTERN = Pattern.compile(
-            "(?:^|[\\s|,])[^\\s=|,]+=[^\\s|,]+"
-    );
+  private static final Pattern KEY_VALUE_PATTERN = Pattern.compile(
+    "(?:^|[\\s,])[^\\s=,]+=[^\\s,]+"
+);
 
     public LogFormat detect(String rawLog) {
 

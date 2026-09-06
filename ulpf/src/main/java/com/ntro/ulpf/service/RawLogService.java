@@ -80,6 +80,11 @@ public class RawLogService {
                 dynamicParserService;
     }
 
+    /*
+     * =========================================================
+     * NEW LOG INGESTION
+     * =========================================================
+     */
     public LogResponse saveRawLog(
             LogRequest request
     ) {
@@ -119,14 +124,13 @@ public class RawLogService {
                 );
 
         /*
-         * IMPORTANT:
-         * Preserve forensic raw evidence FIRST.
+         * Preserve forensic evidence FIRST.
          */
         RawLog savedLog =
                 rawLogRepository.save(rawLog);
 
         /*
-         * Normal deterministic parser path.
+         * Known deterministic format.
          */
         if (detectedFormat
                 != LogFormat.UNKNOWN) {
@@ -160,8 +164,10 @@ public class RawLogService {
         }
 
         /*
-         * UNKNOWN log:
-         * Try dynamically configured parsers.
+         * UNKNOWN FORMAT
+         *
+         * Check whether a previously approved
+         * dynamic parser can understand it.
          */
         try {
 
@@ -172,6 +178,12 @@ public class RawLogService {
                                     request.rawContent()
                             );
 
+            /*
+             * No dynamic parser exists yet.
+             *
+             * Keep the raw evidence and send
+             * the log to the review/AI workflow.
+             */
             if (dynamicResult.isEmpty()) {
 
                 return toResponse(savedLog);
@@ -213,6 +225,123 @@ public class RawLogService {
         }
     }
 
+    /*
+     * =========================================================
+     * REPROCESS AN EXISTING UNKNOWN LOG
+     * =========================================================
+     *
+     * Used after a human approves an AI/deterministic mapping
+     * and a new dynamic parser definition has been created.
+     *
+     * IMPORTANT:
+     * We DO NOT create another RawLog.
+     *
+     * The same forensic raw-log UUID is reused.
+     */
+    public LogResponse reprocessDynamicLog(
+            UUID rawLogId
+    ) {
+
+        RawLog savedLog =
+                rawLogRepository
+                        .findById(rawLogId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Raw log not found: "
+                                                + rawLogId
+                                )
+                        );
+
+        /*
+         * Safety check:
+         * don't normalize the same raw log twice.
+         */
+        if (normalizedLogRepository
+                .findByRawLog_Id(rawLogId)
+                .isPresent()) {
+
+            return toResponse(savedLog);
+        }
+
+        try {
+
+            Optional<DynamicParseResult>
+                    dynamicResult =
+                    dynamicParserService
+                            .tryParse(
+                                    savedLog.getRawContent()
+                            );
+
+            /*
+             * Still no matching parser.
+             *
+             * Keep it in the review queue.
+             */
+            if (dynamicResult.isEmpty()) {
+
+                savedLog.setDetectedFormat(
+                        LogFormat.UNKNOWN.name()
+                );
+
+                savedLog.setProcessingStatus(
+                        "NEEDS_REVIEW"
+                );
+
+                savedLog =
+                        rawLogRepository.save(
+                                savedLog
+                        );
+
+                return toResponse(savedLog);
+            }
+
+            /*
+             * Matching dynamic parser found.
+             */
+            DynamicParseResult result =
+                    dynamicResult.get();
+
+            savedLog.setDetectedFormat(
+                    LogFormat.DYNAMIC.name()
+            );
+
+            savedLog.setProcessingStatus(
+                    "DETECTED"
+            );
+
+            savedLog =
+                    rawLogRepository.save(
+                            savedLog
+                    );
+
+            String parserUsed =
+                    "Dynamic:"
+                            + result.definition()
+                                    .getName();
+
+            /*
+             * Normalize the ORIGINAL stored raw log.
+             */
+            return processParsedLog(
+                    savedLog,
+                    result.parsedLog(),
+                    parserUsed
+            );
+
+        } catch (Exception e) {
+
+            return markFailed(
+                    savedLog,
+                    e
+            );
+        }
+    }
+
+    /*
+     * =========================================================
+     * NORMALIZATION + NORMALIZED STORAGE
+     * =========================================================
+     */
     private LogResponse processParsedLog(
             RawLog savedLog,
             ParsedLog parsedLog,
@@ -270,6 +399,11 @@ public class RawLogService {
         }
     }
 
+    /*
+     * =========================================================
+     * FAILURE HANDLING
+     * =========================================================
+     */
     private LogResponse markFailed(
             RawLog savedLog,
             Exception exception
@@ -294,6 +428,11 @@ public class RawLogService {
         return toResponse(savedLog);
     }
 
+    /*
+     * =========================================================
+     * RESPONSE MAPPER
+     * =========================================================
+     */
     private LogResponse toResponse(
             RawLog savedLog
     ) {
