@@ -1,0 +1,546 @@
+text,label
+field src original src value 192.168.1.50 context linux syslog authentication,source_ip
+field src original src value 172.16.10.9 context nginx access log,source_ip
+field src original src value 10.0.0.5 context spring boot application error,source_ip
+field src original src value 192.168.1.50 context database audit log,source_ip
+field src original src value 192.168.1.50 context ids ips alert,source_ip
+field src_ip original src_ip value 2001:db8::1 context linux syslog authentication,source_ip
+field src_ip original src_ip value 192.168.1.50 context windows event security audit,source_ip
+field src_ip original src_ip value 10.0.0.5 context nginx access log,source_ip
+field src_ip original src_ip value 192.168.1.50 context vpn authentication,source_ip
+field src_ip original src_ip value 10.0.0.5 context docker container event,source_ip
+field source_ip original source_ip value 2001:db8::1 context nginx access log,source_ip
+field source_ip original source_ip value 2001:db8::1 context ids ips alert,source_ip
+field source_ip original source_ip value 172.16.10.9 context kubernetes pod log,source_ip
+field source_ip original source_ip value 192.168.1.50 context kubernetes pod log,source_ip
+field source_ip original source_ip value 10.0.0.5 context docker container event,source_ip
+field source original source value 2001:db8::1 context fortigate firewall traffic,source_ip
+field source original source value 172.16.10.9 context spring boot application error,source_ip
+field source original source value 10.0.0.5 context kubernetes pod log,source_ip
+field source original source value 172.16.10.9 context windows event security audit,source_ip
+field source original source value 192.168.1.50 context palo alto firewall threat,source_ip
+field client_ip original client_ip value 192.168.1.50 context fortigate firewall traffic,source_ip
+field client_ip original client_ip value 172.16.10.9 context ids ips alert,source_ip
+field client_ip original client_ip value 172.16.10.9 context kubernetes pod log,source_ip
+field client_ip original client_ip value 192.168.1.50 context docker container event,source_ip
+field client_ip original client_ip value 2001:db8::1 context vpn authentication,source_ip
+field clientaddr original clientaddr value 192.168.1.50 context cloud gateway event,source_ip
+field clientaddr original clientaddr value 2001:db8::1 context windows event security audit,source_ip
+field clientaddr original clientaddr value 172.16.10.9 context custom vendor security event,source_ip
+field clientaddr original clientaddr value 172.16.10.9 context ids ips alert,source_ip
+field clientaddr original clientaddr value 10.0.0.5 context docker container event,source_ip
+field remote_ip original remote_ip value 192.168.1.50 context linux syslog authentication,source_ip
+field remote_ip original remote_ip value 10.0.0.5 context kubernetes pod log,source_ip
+field remote_ip original remote_ip value 172.16.10.9 context windows event security audit,source_ip
+field remote_ip original remote_ip value 10.0.0.5 context custom vendor security event,source_ip
+field remote_ip original remote_ip value 192.168.1.50 context palo alto firewall threat,source_ip
+field remote_addr original remote_addr value 172.16.10.9 context cisco asa connection,source_ip
+field remote_addr original remote_addr value 172.16.10.9 context spring boot application error,source_ip
+field remote_addr original remote_addr value 172.16.10.9 context fortigate firewall traffic,source_ip
+field remote_addr original remote_addr value 10.0.0.5 context database audit log,source_ip
+field remote_addr original remote_addr value 172.16.10.9 context docker container event,source_ip
+field peer_ip original peer_ip value 192.168.1.50 context ids ips alert,source_ip
+field peer_ip original peer_ip value 10.0.0.5 context vpn authentication,source_ip
+field peer_ip original peer_ip value 10.0.0.5 context spring boot application error,source_ip
+field peer_ip original peer_ip value 2001:db8::1 context palo alto firewall threat,source_ip
+field peer_ip original peer_ip value 172.16.10.9 context cloud gateway event,source_ip
+field origin_ip original origin_ip value 10.0.0.5 context database audit log,source_ip
+field origin_ip original origin_ip value 172.16.10.9 context custom vendor security event,source_ip
+field origin_ip original origin_ip value 192.168.1.50 context nginx access log,source_ip
+field origin_ip original origin_ip value 192.168.1.50 context kubernetes pod log,source_ip
+field origin_ip original origin_ip value 172.16.10.9 context palo alto firewall threat,source_ip
+field ip_src original ip_src value 172.16.10.9 context windows event security audit,source_ip
+field ip_src original ip_src value 10.0.0.5 context cloud gateway event,source_ip
+field ip_src original ip_src value 172.16.10.9 context nginx access log,source_ip
+field ip_src original ip_src value 2001:db8::1 context palo alto firewall threat,source_ip
+field ip_src original ip_src value 2001:db8::1 context spring boot application error,source_ip
+field sourceAddress original sourceAddress value 172.16.10.9 context spring boot application error,source_ip
+field sourceAddress original sourceAddress value 10.0.0.5 context docker container event,source_ip
+field sourceAddress original sourceAddress value 172.16.10.9 context docker container event,source_ip
+field sourceAddress original sourceAddress value 2001:db8::1 context cloud gateway event,source_ip
+field sourceAddress original sourceAddress value 2001:db8::1 context fortigate firewall traffic,source_ip
+field clientAddress original clientAddress value 10.0.0.5 context spring boot application error,source_ip
+field clientAddress original clientAddress value 2001:db8::1 context windows event security audit,source_ip
+field clientAddress original clientAddress value 192.168.1.50 context custom vendor security event,source_ip
+field clientAddress original clientAddress value 192.168.1.50 context spring boot application error,source_ip
+field clientAddress original clientAddress value 10.0.0.5 context kubernetes pod log,source_ip
+field sender_ip original sender_ip value 2001:db8::1 context ids ips alert,source_ip
+field sender_ip original sender_ip value 192.168.1.50 context palo alto firewall threat,source_ip
+field sender_ip original sender_ip value 2001:db8::1 context ids ips alert,source_ip
+field sender_ip original sender_ip value 2001:db8::1 context vpn authentication,source_ip
+field sender_ip original sender_ip value 172.16.10.9 context vpn authentication,source_ip
+field from_ip original from_ip value 192.168.1.50 context database audit log,source_ip
+field from_ip original from_ip value 192.168.1.50 context database audit log,source_ip
+field from_ip original from_ip value 172.16.10.9 context kubernetes pod log,source_ip
+field from_ip original from_ip value 172.16.10.9 context windows event security audit,source_ip
+field from_ip original from_ip value 172.16.10.9 context palo alto firewall threat,source_ip
+field dst original dst value 192.168.50.8 context cisco asa connection,destination_ip
+field dst original dst value 10.20.30.40 context docker container event,destination_ip
+field dst original dst value 172.20.1.10 context vpn authentication,destination_ip
+field dst original dst value 192.168.50.8 context vpn authentication,destination_ip
+field dst original dst value 10.20.30.40 context custom vendor security event,destination_ip
+field dst_ip original dst_ip value 172.20.1.10 context custom vendor security event,destination_ip
+field dst_ip original dst_ip value 192.168.50.8 context spring boot application error,destination_ip
+field dst_ip original dst_ip value 172.20.1.10 context kubernetes pod log,destination_ip
+field dst_ip original dst_ip value 192.168.50.8 context vpn authentication,destination_ip
+field dst_ip original dst_ip value 10.20.30.40 context ids ips alert,destination_ip
+field destination_ip original destination_ip value 172.20.1.10 context cisco asa connection,destination_ip
+field destination_ip original destination_ip value 10.20.30.40 context windows event security audit,destination_ip
+field destination_ip original destination_ip value 172.20.1.10 context cloud gateway event,destination_ip
+field destination_ip original destination_ip value 172.20.1.10 context nginx access log,destination_ip
+field destination_ip original destination_ip value 10.20.30.40 context nginx access log,destination_ip
+field dest_ip original dest_ip value 10.20.30.40 context windows event security audit,destination_ip
+field dest_ip original dest_ip value 2001:db8::5 context custom vendor security event,destination_ip
+field dest_ip original dest_ip value 10.20.30.40 context kubernetes pod log,destination_ip
+field dest_ip original dest_ip value 192.168.50.8 context spring boot application error,destination_ip
+field dest_ip original dest_ip value 2001:db8::5 context vpn authentication,destination_ip
+field target_ip original target_ip value 192.168.50.8 context apache web server,destination_ip
+field target_ip original target_ip value 2001:db8::5 context nginx access log,destination_ip
+field target_ip original target_ip value 192.168.50.8 context docker container event,destination_ip
+field target_ip original target_ip value 172.20.1.10 context palo alto firewall threat,destination_ip
+field target_ip original target_ip value 172.20.1.10 context cisco asa connection,destination_ip
+field server_ip original server_ip value 2001:db8::5 context windows event security audit,destination_ip
+field server_ip original server_ip value 192.168.50.8 context nginx access log,destination_ip
+field server_ip original server_ip value 10.20.30.40 context fortigate firewall traffic,destination_ip
+field server_ip original server_ip value 10.20.30.40 context ids ips alert,destination_ip
+field server_ip original server_ip value 192.168.50.8 context ids ips alert,destination_ip
+field remote_host_ip original remote_host_ip value 192.168.50.8 context linux syslog authentication,destination_ip
+field remote_host_ip original remote_host_ip value 10.20.30.40 context docker container event,destination_ip
+field remote_host_ip original remote_host_ip value 10.20.30.40 context nginx access log,destination_ip
+field remote_host_ip original remote_host_ip value 10.20.30.40 context cloud gateway event,destination_ip
+field remote_host_ip original remote_host_ip value 10.20.30.40 context custom vendor security event,destination_ip
+field ip_dst original ip_dst value 172.20.1.10 context windows event security audit,destination_ip
+field ip_dst original ip_dst value 192.168.50.8 context apache web server,destination_ip
+field ip_dst original ip_dst value 2001:db8::5 context nginx access log,destination_ip
+field ip_dst original ip_dst value 192.168.50.8 context docker container event,destination_ip
+field ip_dst original ip_dst value 2001:db8::5 context nginx access log,destination_ip
+field destinationAddress original destinationAddress value 2001:db8::5 context kubernetes pod log,destination_ip
+field destinationAddress original destinationAddress value 2001:db8::5 context nginx access log,destination_ip
+field destinationAddress original destinationAddress value 10.20.30.40 context windows event security audit,destination_ip
+field destinationAddress original destinationAddress value 2001:db8::5 context fortigate firewall traffic,destination_ip
+field destinationAddress original destinationAddress value 2001:db8::5 context palo alto firewall threat,destination_ip
+field serverAddress original serverAddress value 2001:db8::5 context custom vendor security event,destination_ip
+field serverAddress original serverAddress value 10.20.30.40 context database audit log,destination_ip
+field serverAddress original serverAddress value 10.20.30.40 context linux syslog authentication,destination_ip
+field serverAddress original serverAddress value 2001:db8::5 context docker container event,destination_ip
+field serverAddress original serverAddress value 172.20.1.10 context kubernetes pod log,destination_ip
+field to_ip original to_ip value 10.20.30.40 context nginx access log,destination_ip
+field to_ip original to_ip value 192.168.50.8 context nginx access log,destination_ip
+field to_ip original to_ip value 2001:db8::5 context spring boot application error,destination_ip
+field to_ip original to_ip value 2001:db8::5 context spring boot application error,destination_ip
+field to_ip original to_ip value 172.20.1.10 context cisco asa connection,destination_ip
+field user original user value om context custom vendor security event,username
+field user original user value admin context cisco asa connection,username
+field user original user value DOMAIN\\jdoe context windows event security audit,username
+field user original user value admin context database audit log,username
+field user original user value DOMAIN\\jdoe context custom vendor security event,username
+field usr original usr value admin context windows event security audit,username
+field usr original usr value om context spring boot application error,username
+field usr original usr value svc_api context cisco asa connection,username
+field usr original usr value svc_api context nginx access log,username
+field usr original usr value svc_api context cloud gateway event,username
+field username original username value admin context spring boot application error,username
+field username original username value svc_api context linux syslog authentication,username
+field username original username value svc_api context apache web server,username
+field username original username value svc_api context apache web server,username
+field username original username value svc_api context docker container event,username
+field account original account value DOMAIN\\jdoe context database audit log,username
+field account original account value svc_api context spring boot application error,username
+field account original account value om context apache web server,username
+field account original account value om context linux syslog authentication,username
+field account original account value DOMAIN\\jdoe context docker container event,username
+field account_name original account_name value DOMAIN\\jdoe context linux syslog authentication,username
+field account_name original account_name value root context linux syslog authentication,username
+field account_name original account_name value admin context ids ips alert,username
+field account_name original account_name value svc_api context vpn authentication,username
+field account_name original account_name value DOMAIN\\jdoe context spring boot application error,username
+field login original login value admin context vpn authentication,username
+field login original login value admin context custom vendor security event,username
+field login original login value om context windows event security audit,username
+field login original login value DOMAIN\\jdoe context windows event security audit,username
+field login original login value om context palo alto firewall threat,username
+field login_user original login_user value admin context cloud gateway event,username
+field login_user original login_user value DOMAIN\\jdoe context nginx access log,username
+field login_user original login_user value DOMAIN\\jdoe context ids ips alert,username
+field login_user original login_user value admin context ids ips alert,username
+field login_user original login_user value admin context palo alto firewall threat,username
+field principal original principal value DOMAIN\\jdoe context ids ips alert,username
+field principal original principal value DOMAIN\\jdoe context fortigate firewall traffic,username
+field principal original principal value root context nginx access log,username
+field principal original principal value root context nginx access log,username
+field principal original principal value root context palo alto firewall threat,username
+field uid original uid value om context database audit log,username
+field uid original uid value root context cisco asa connection,username
+field uid original uid value root context cloud gateway event,username
+field uid original uid value admin context linux syslog authentication,username
+field uid original uid value svc_api context ids ips alert,username
+field user_name original user_name value DOMAIN\\jdoe context windows event security audit,username
+field user_name original user_name value admin context vpn authentication,username
+field user_name original user_name value om context vpn authentication,username
+field user_name original user_name value root context spring boot application error,username
+field user_name original user_name value root context cloud gateway event,username
+field subject original subject value admin context cloud gateway event,username
+field subject original subject value om context fortigate firewall traffic,username
+field subject original subject value root context spring boot application error,username
+field subject original subject value svc_api context custom vendor security event,username
+field subject original subject value DOMAIN\\jdoe context docker container event,username
+field actor original actor value root context ids ips alert,username
+field actor original actor value DOMAIN\\jdoe context linux syslog authentication,username
+field actor original actor value DOMAIN\\jdoe context apache web server,username
+field actor original actor value admin context cloud gateway event,username
+field actor original actor value om context apache web server,username
+field action original action value LOGIN_FAILED context cloud gateway event,action
+field action original action value LOGIN_FAILED context docker container event,action
+field action original action value AUTH_SUCCESS context spring boot application error,action
+field action original action value ALLOW context apache web server,action
+field action original action value AUTH_SUCCESS context nginx access log,action
+field event_action original event_action value DELETE context fortigate firewall traffic,action
+field event_action original event_action value BLOCK context database audit log,action
+field event_action original event_action value DELETE context custom vendor security event,action
+field event_action original event_action value ALLOW context vpn authentication,action
+field event_action original event_action value CONNECT context apache web server,action
+field operation original operation value LOGIN_FAILED context windows event security audit,action
+field operation original operation value DELETE context palo alto firewall threat,action
+field operation original operation value ALLOW context linux syslog authentication,action
+field operation original operation value LOGIN_FAILED context fortigate firewall traffic,action
+field operation original operation value BLOCK context database audit log,action
+field activity original activity value ALLOW context spring boot application error,action
+field activity original activity value DELETE context cisco asa connection,action
+field activity original activity value AUTH_SUCCESS context docker container event,action
+field activity original activity value CONNECT context vpn authentication,action
+field activity original activity value LOGIN_FAILED context windows event security audit,action
+field event original event value LOGIN_FAILED context cloud gateway event,action
+field event original event value DELETE context cloud gateway event,action
+field event original event value BLOCK context vpn authentication,action
+field event original event value LOGIN_FAILED context custom vendor security event,action
+field event original event value ALLOW context ids ips alert,action
+field event_type original event_type value AUTH_SUCCESS context spring boot application error,action
+field event_type original event_type value CONNECT context spring boot application error,action
+field event_type original event_type value LOGIN_FAILED context apache web server,action
+field event_type original event_type value ALLOW context cloud gateway event,action
+field event_type original event_type value LOGIN_FAILED context cloud gateway event,action
+field command original command value ALLOW context nginx access log,action
+field command original command value DELETE context nginx access log,action
+field command original command value DELETE context windows event security audit,action
+field command original command value ALLOW context kubernetes pod log,action
+field command original command value AUTH_SUCCESS context cloud gateway event,action
+field verb original verb value CONNECT context ids ips alert,action
+field verb original verb value DELETE context spring boot application error,action
+field verb original verb value BLOCK context custom vendor security event,action
+field verb original verb value BLOCK context kubernetes pod log,action
+field verb original verb value BLOCK context cloud gateway event,action
+field decision original decision value CONNECT context linux syslog authentication,action
+field decision original decision value BLOCK context docker container event,action
+field decision original decision value ALLOW context kubernetes pod log,action
+field decision original decision value CONNECT context kubernetes pod log,action
+field decision original decision value DELETE context custom vendor security event,action
+field act original act value DELETE context kubernetes pod log,action
+field act original act value BLOCK context apache web server,action
+field act original act value BLOCK context kubernetes pod log,action
+field act original act value DELETE context windows event security audit,action
+field act original act value CONNECT context custom vendor security event,action
+field severity original severity value HIGH context custom vendor security event,severity
+field severity original severity value 5 context nginx access log,severity
+field severity original severity value ERROR context custom vendor security event,severity
+field severity original severity value 5 context fortigate firewall traffic,severity
+field severity original severity value critical context custom vendor security event,severity
+field sev original sev value ERROR context nginx access log,severity
+field sev original sev value HIGH context database audit log,severity
+field sev original sev value ERROR context palo alto firewall threat,severity
+field sev original sev value critical context apache web server,severity
+field sev original sev value HIGH context kubernetes pod log,severity
+field priority original priority value critical context fortigate firewall traffic,severity
+field priority original priority value warning context palo alto firewall threat,severity
+field priority original priority value warning context fortigate firewall traffic,severity
+field priority original priority value HIGH context windows event security audit,severity
+field priority original priority value critical context spring boot application error,severity
+field level original level value warning context apache web server,severity
+field level original level value HIGH context windows event security audit,severity
+field level original level value warning context palo alto firewall threat,severity
+field level original level value critical context docker container event,severity
+field level original level value critical context palo alto firewall threat,severity
+field log_level original log_level value warning context vpn authentication,severity
+field log_level original log_level value HIGH context palo alto firewall threat,severity
+field log_level original log_level value warning context nginx access log,severity
+field log_level original log_level value critical context linux syslog authentication,severity
+field log_level original log_level value 5 context linux syslog authentication,severity
+field risk original risk value warning context cloud gateway event,severity
+field risk original risk value warning context database audit log,severity
+field risk original risk value ERROR context fortigate firewall traffic,severity
+field risk original risk value 5 context windows event security audit,severity
+field risk original risk value critical context ids ips alert,severity
+field criticality original criticality value critical context database audit log,severity
+field criticality original criticality value HIGH context docker container event,severity
+field criticality original criticality value critical context vpn authentication,severity
+field criticality original criticality value critical context database audit log,severity
+field criticality original criticality value 5 context fortigate firewall traffic,severity
+field dpt original dpt value 53 context docker container event,destination_port
+field dpt original dpt value 3389 context vpn authentication,destination_port
+field dpt original dpt value 22 context nginx access log,destination_port
+field dpt original dpt value 53 context database audit log,destination_port
+field dpt original dpt value 53 context database audit log,destination_port
+field dst_port original dst_port value 22 context ids ips alert,destination_port
+field dst_port original dst_port value 8080 context apache web server,destination_port
+field dst_port original dst_port value 53 context vpn authentication,destination_port
+field dst_port original dst_port value 443 context apache web server,destination_port
+field dst_port original dst_port value 3389 context nginx access log,destination_port
+field destination_port original destination_port value 53 context kubernetes pod log,destination_port
+field destination_port original destination_port value 8080 context ids ips alert,destination_port
+field destination_port original destination_port value 3389 context cisco asa connection,destination_port
+field destination_port original destination_port value 53 context cisco asa connection,destination_port
+field destination_port original destination_port value 22 context vpn authentication,destination_port
+field target_port original target_port value 53 context kubernetes pod log,destination_port
+field target_port original target_port value 22 context database audit log,destination_port
+field target_port original target_port value 443 context apache web server,destination_port
+field target_port original target_port value 8080 context database audit log,destination_port
+field target_port original target_port value 8080 context fortigate firewall traffic,destination_port
+field server_port original server_port value 443 context custom vendor security event,destination_port
+field server_port original server_port value 22 context database audit log,destination_port
+field server_port original server_port value 3389 context nginx access log,destination_port
+field server_port original server_port value 22 context spring boot application error,destination_port
+field server_port original server_port value 443 context linux syslog authentication,destination_port
+field port_dst original port_dst value 22 context cisco asa connection,destination_port
+field port_dst original port_dst value 8080 context custom vendor security event,destination_port
+field port_dst original port_dst value 443 context cisco asa connection,destination_port
+field port_dst original port_dst value 53 context cloud gateway event,destination_port
+field port_dst original port_dst value 8080 context nginx access log,destination_port
+field spt original spt value 12345 context cisco asa connection,source_port
+field spt original spt value 12345 context nginx access log,source_port
+field spt original spt value 49152 context database audit log,source_port
+field spt original spt value 55221 context cloud gateway event,source_port
+field spt original spt value 55221 context kubernetes pod log,source_port
+field src_port original src_port value 12345 context nginx access log,source_port
+field src_port original src_port value 49152 context kubernetes pod log,source_port
+field src_port original src_port value 12345 context linux syslog authentication,source_port
+field src_port original src_port value 49152 context cloud gateway event,source_port
+field src_port original src_port value 55221 context cisco asa connection,source_port
+field source_port original source_port value 49152 context kubernetes pod log,source_port
+field source_port original source_port value 12345 context database audit log,source_port
+field source_port original source_port value 53000 context kubernetes pod log,source_port
+field source_port original source_port value 12345 context ids ips alert,source_port
+field source_port original source_port value 12345 context custom vendor security event,source_port
+field client_port original client_port value 12345 context cloud gateway event,source_port
+field client_port original client_port value 49152 context docker container event,source_port
+field client_port original client_port value 12345 context cisco asa connection,source_port
+field client_port original client_port value 53000 context kubernetes pod log,source_port
+field client_port original client_port value 49152 context custom vendor security event,source_port
+field port_src original port_src value 53000 context kubernetes pod log,source_port
+field port_src original port_src value 12345 context database audit log,source_port
+field port_src original port_src value 49152 context apache web server,source_port
+field port_src original port_src value 12345 context windows event security audit,source_port
+field port_src original port_src value 53000 context nginx access log,source_port
+field host original host value WIN-DC01 context fortigate firewall traffic,host
+field host original host value WIN-DC01 context cloud gateway event,host
+field host original host value server01 context spring boot application error,host
+field host original host value fw-edge-01 context nginx access log,host
+field host original host value k8s-node-2 context docker container event,host
+field hostname original hostname value fw-edge-01 context docker container event,host
+field hostname original hostname value fw-edge-01 context windows event security audit,host
+field hostname original hostname value k8s-node-2 context palo alto firewall threat,host
+field hostname original hostname value WIN-DC01 context vpn authentication,host
+field hostname original hostname value k8s-node-2 context palo alto firewall threat,host
+field device original device value server01 context nginx access log,host
+field device original device value k8s-node-2 context palo alto firewall threat,host
+field device original device value server01 context custom vendor security event,host
+field device original device value k8s-node-2 context cisco asa connection,host
+field device original device value server01 context fortigate firewall traffic,host
+field device_name original device_name value WIN-DC01 context kubernetes pod log,host
+field device_name original device_name value k8s-node-2 context custom vendor security event,host
+field device_name original device_name value k8s-node-2 context vpn authentication,host
+field device_name original device_name value fw-edge-01 context cisco asa connection,host
+field device_name original device_name value fw-edge-01 context apache web server,host
+field machine original machine value k8s-node-2 context cisco asa connection,host
+field machine original machine value server01 context palo alto firewall threat,host
+field machine original machine value WIN-DC01 context database audit log,host
+field machine original machine value k8s-node-2 context docker container event,host
+field machine original machine value fw-edge-01 context custom vendor security event,host
+field node original node value k8s-node-2 context cloud gateway event,host
+field node original node value fw-edge-01 context ids ips alert,host
+field node original node value server01 context cloud gateway event,host
+field node original node value k8s-node-2 context ids ips alert,host
+field node original node value server01 context windows event security audit,host
+field computer_name original computer_name value k8s-node-2 context spring boot application error,host
+field computer_name original computer_name value k8s-node-2 context spring boot application error,host
+field computer_name original computer_name value server01 context apache web server,host
+field computer_name original computer_name value k8s-node-2 context fortigate firewall traffic,host
+field computer_name original computer_name value fw-edge-01 context cisco asa connection,host
+field destination_host original destination_host value mail01 context fortigate firewall traffic,destination_host
+field destination_host original destination_host value target.example context apache web server,destination_host
+field destination_host original destination_host value target.example context apache web server,destination_host
+field destination_host original destination_host value db01 context cisco asa connection,destination_host
+field destination_host original destination_host value db01 context docker container event,destination_host
+field dst_host original dst_host value db01 context fortigate firewall traffic,destination_host
+field dst_host original dst_host value api.internal context database audit log,destination_host
+field dst_host original dst_host value db01 context kubernetes pod log,destination_host
+field dst_host original dst_host value db01 context kubernetes pod log,destination_host
+field dst_host original dst_host value db01 context nginx access log,destination_host
+field target_host original target_host value api.internal context custom vendor security event,destination_host
+field target_host original target_host value db01 context ids ips alert,destination_host
+field target_host original target_host value api.internal context nginx access log,destination_host
+field target_host original target_host value api.internal context cisco asa connection,destination_host
+field target_host original target_host value db01 context ids ips alert,destination_host
+field server_host original server_host value api.internal context cisco asa connection,destination_host
+field server_host original server_host value mail01 context kubernetes pod log,destination_host
+field server_host original server_host value mail01 context spring boot application error,destination_host
+field server_host original server_host value db01 context kubernetes pod log,destination_host
+field server_host original server_host value api.internal context apache web server,destination_host
+field remote_host original remote_host value db01 context ids ips alert,destination_host
+field remote_host original remote_host value db01 context cloud gateway event,destination_host
+field remote_host original remote_host value mail01 context ids ips alert,destination_host
+field remote_host original remote_host value target.example context palo alto firewall threat,destination_host
+field remote_host original remote_host value api.internal context windows event security audit,destination_host
+field timestamp original timestamp value 2026-09-06 22:44:31 context docker container event,timestamp
+field timestamp original timestamp value 2026-09-06 22:44:31 context nginx access log,timestamp
+field timestamp original timestamp value 2026-09-06T22:44:31 context docker container event,timestamp
+field timestamp original timestamp value Sep 6 22:44:31 context custom vendor security event,timestamp
+field timestamp original timestamp value 2026-09-06 22:44:31 context ids ips alert,timestamp
+field ts original ts value 2026-09-06T22:44:31 context kubernetes pod log,timestamp
+field ts original ts value 2026-09-06 22:44:31 context kubernetes pod log,timestamp
+field ts original ts value 2026-09-06T22:44:31 context fortigate firewall traffic,timestamp
+field ts original ts value 2026-09-06 22:44:31 context palo alto firewall threat,timestamp
+field ts original ts value 2026-09-06 22:44:31 context fortigate firewall traffic,timestamp
+field event_time original event_time value 2026-09-06T22:44:31 context vpn authentication,timestamp
+field event_time original event_time value 2026-09-06 22:44:31 context fortigate firewall traffic,timestamp
+field event_time original event_time value 2026-09-06T22:44:31 context custom vendor security event,timestamp
+field event_time original event_time value Sep 6 22:44:31 context custom vendor security event,timestamp
+field event_time original event_time value Sep 6 22:44:31 context windows event security audit,timestamp
+field log_time original log_time value Sep 6 22:44:31 context fortigate firewall traffic,timestamp
+field log_time original log_time value 2026-09-06 22:44:31 context cloud gateway event,timestamp
+field log_time original log_time value Sep 6 22:44:31 context docker container event,timestamp
+field log_time original log_time value 2026-09-06T22:44:31 context palo alto firewall threat,timestamp
+field log_time original log_time value 2026-09-06T22:44:31 context docker container event,timestamp
+field datetime original datetime value 2026-09-06 22:44:31 context database audit log,timestamp
+field datetime original datetime value Sep 6 22:44:31 context ids ips alert,timestamp
+field datetime original datetime value 2026-09-06 22:44:31 context kubernetes pod log,timestamp
+field datetime original datetime value Sep 6 22:44:31 context cisco asa connection,timestamp
+field datetime original datetime value Sep 6 22:44:31 context custom vendor security event,timestamp
+field time original time value 2026-09-06 22:44:31 context ids ips alert,timestamp
+field time original time value Sep 6 22:44:31 context fortigate firewall traffic,timestamp
+field time original time value 2026-09-06T22:44:31 context custom vendor security event,timestamp
+field time original time value 2026-09-06T22:44:31 context apache web server,timestamp
+field time original time value Sep 6 22:44:31 context nginx access log,timestamp
+field created_at original created_at value Sep 6 22:44:31 context ids ips alert,timestamp
+field created_at original created_at value 2026-09-06 22:44:31 context database audit log,timestamp
+field created_at original created_at value Sep 6 22:44:31 context fortigate firewall traffic,timestamp
+field created_at original created_at value 2026-09-06T22:44:31 context cisco asa connection,timestamp
+field created_at original created_at value Sep 6 22:44:31 context spring boot application error,timestamp
+field event_timestamp original event_timestamp value Sep 6 22:44:31 context nginx access log,timestamp
+field event_timestamp original event_timestamp value Sep 6 22:44:31 context kubernetes pod log,timestamp
+field event_timestamp original event_timestamp value Sep 6 22:44:31 context fortigate firewall traffic,timestamp
+field event_timestamp original event_timestamp value Sep 6 22:44:31 context cloud gateway event,timestamp
+field event_timestamp original event_timestamp value 2026-09-06 22:44:31 context docker container event,timestamp
+field protocol original protocol value HTTPS context vpn authentication,protocol
+field protocol original protocol value TCP context vpn authentication,protocol
+field protocol original protocol value UDP context windows event security audit,protocol
+field protocol original protocol value UDP context docker container event,protocol
+field protocol original protocol value SSH context cisco asa connection,protocol
+field proto original proto value ICMP context kubernetes pod log,protocol
+field proto original proto value UDP context docker container event,protocol
+field proto original proto value SSH context database audit log,protocol
+field proto original proto value SSH context cisco asa connection,protocol
+field proto original proto value TCP context windows event security audit,protocol
+field transport original transport value HTTPS context nginx access log,protocol
+field transport original transport value SSH context docker container event,protocol
+field transport original transport value UDP context apache web server,protocol
+field transport original transport value ICMP context fortigate firewall traffic,protocol
+field transport original transport value SSH context vpn authentication,protocol
+field network_protocol original network_protocol value ICMP context fortigate firewall traffic,protocol
+field network_protocol original network_protocol value SSH context docker container event,protocol
+field network_protocol original network_protocol value ICMP context fortigate firewall traffic,protocol
+field network_protocol original network_protocol value HTTPS context docker container event,protocol
+field network_protocol original network_protocol value SSH context apache web server,protocol
+field ip_protocol original ip_protocol value HTTPS context apache web server,protocol
+field ip_protocol original ip_protocol value UDP context windows event security audit,protocol
+field ip_protocol original ip_protocol value UDP context fortigate firewall traffic,protocol
+field ip_protocol original ip_protocol value TCP context docker container event,protocol
+field ip_protocol original ip_protocol value ICMP context kubernetes pod log,protocol
+field process original process value java context nginx access log,process
+field process original process value java context docker container event,process
+field process original process value postgres context apache web server,process
+field process original process value kernel context kubernetes pod log,process
+field process original process value kernel context ids ips alert,process
+field process_name original process_name value nginx context windows event security audit,process
+field process_name original process_name value java context apache web server,process
+field process_name original process_name value java context fortigate firewall traffic,process
+field process_name original process_name value java context apache web server,process
+field process_name original process_name value sshd context docker container event,process
+field proc original proc value kernel context spring boot application error,process
+field proc original proc value nginx context linux syslog authentication,process
+field proc original proc value sshd context vpn authentication,process
+field proc original proc value nginx context docker container event,process
+field proc original proc value java context database audit log,process
+field pid original pid value postgres context windows event security audit,process
+field pid original pid value sshd context ids ips alert,process
+field pid original pid value nginx context cisco asa connection,process
+field pid original pid value postgres context cisco asa connection,process
+field pid original pid value nginx context spring boot application error,process
+field application original application value sshd context apache web server,process
+field application original application value postgres context windows event security audit,process
+field application original application value sshd context palo alto firewall threat,process
+field application original application value postgres context windows event security audit,process
+field application original application value kernel context database audit log,process
+field service_name original service_name value sshd context spring boot application error,process
+field service_name original service_name value java context kubernetes pod log,process
+field service_name original service_name value kernel context apache web server,process
+field service_name original service_name value sshd context nginx access log,process
+field service_name original service_name value sshd context vpn authentication,process
+field outcome original outcome value ALLOWED context ids ips alert,outcome
+field outcome original outcome value TIMEOUT context kubernetes pod log,outcome
+field outcome original outcome value TIMEOUT context nginx access log,outcome
+field outcome original outcome value TIMEOUT context palo alto firewall threat,outcome
+field outcome original outcome value ALLOWED context cloud gateway event,outcome
+field status original status value ALLOWED context apache web server,outcome
+field status original status value TIMEOUT context palo alto firewall threat,outcome
+field status original status value DENIED context ids ips alert,outcome
+field status original status value TIMEOUT context linux syslog authentication,outcome
+field status original status value TIMEOUT context docker container event,outcome
+field result original result value FAILED context kubernetes pod log,outcome
+field result original result value SUCCESS context database audit log,outcome
+field result original result value SUCCESS context apache web server,outcome
+field result original result value FAILED context spring boot application error,outcome
+field result original result value SUCCESS context spring boot application error,outcome
+field event_result original event_result value TIMEOUT context windows event security audit,outcome
+field event_result original event_result value SUCCESS context linux syslog authentication,outcome
+field event_result original event_result value ALLOWED context cisco asa connection,outcome
+field event_result original event_result value TIMEOUT context cisco asa connection,outcome
+field event_result original event_result value DENIED context linux syslog authentication,outcome
+field auth_result original auth_result value SUCCESS context apache web server,outcome
+field auth_result original auth_result value DENIED context docker container event,outcome
+field auth_result original auth_result value ALLOWED context windows event security audit,outcome
+field auth_result original auth_result value SUCCESS context cloud gateway event,outcome
+field auth_result original auth_result value DENIED context kubernetes pod log,outcome
+field decision_result original decision_result value TIMEOUT context database audit log,outcome
+field decision_result original decision_result value SUCCESS context palo alto firewall threat,outcome
+field decision_result original decision_result value FAILED context vpn authentication,outcome
+field decision_result original decision_result value SUCCESS context database audit log,outcome
+field decision_result original decision_result value SUCCESS context cloud gateway event,outcome
+field message original message value user logged in context custom vendor security event,message
+field message original message value connection blocked context windows event security audit,message
+field message original message value authentication failed context spring boot application error,message
+field message original message value user logged in context ids ips alert,message
+field message original message value user logged in context cisco asa connection,message
+field msg original msg value authentication failed context cisco asa connection,message
+field msg original msg value user logged in context docker container event,message
+field msg original msg value request completed context apache web server,message
+field msg original msg value request completed context cisco asa connection,message
+field msg original msg value authentication failed context ids ips alert,message
+field description original description value authentication failed context cloud gateway event,message
+field description original description value request completed context docker container event,message
+field description original description value user logged in context ids ips alert,message
+field description original description value user logged in context linux syslog authentication,message
+field description original description value authentication failed context nginx access log,message
+field detail original detail value authentication failed context kubernetes pod log,message
+field detail original detail value user logged in context ids ips alert,message
+field detail original detail value authentication failed context kubernetes pod log,message
+field detail original detail value connection blocked context cisco asa connection,message
+field detail original detail value request completed context cloud gateway event,message
+field event_message original event_message value user logged in context spring boot application error,message
+field event_message original event_message value request completed context database audit log,message
+field event_message original event_message value request completed context windows event security audit,message
+field event_message original event_message value request completed context fortigate firewall traffic,message
+field event_message original event_message value request completed context fortigate firewall traffic,message
+field reason original reason value user logged in context database audit log,message
+field reason original reason value authentication failed context custom vendor security event,message
+field reason original reason value connection blocked context fortigate firewall traffic,message
+field reason original reason value request completed context docker container event,message
+field reason original reason value request completed context apache web server,message

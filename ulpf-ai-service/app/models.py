@@ -1,11 +1,10 @@
-from typing import Any
-
 from pydantic import BaseModel, Field
 
 
 class FieldCandidate(BaseModel):
     field_name: str
     sample_value: str | None = None
+    context: str | None = None
 
 
 class MappingRequest(BaseModel):
