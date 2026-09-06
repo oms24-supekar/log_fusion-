@@ -1278,6 +1278,52 @@ function UnknownAnalysis() {
 
       const initial = {};
 
+
+      // ==================================================
+      // AI SUGGESTIONS
+      // ==================================================
+      // AI fills fields that deterministic rules
+      // do not already understand.
+      //
+      // We only auto-select predictions with
+      // reasonable confidence.
+      // ==================================================
+
+      data.aiSuggestions
+        ?.forEach((suggestion) => {
+
+          const field =
+            suggestion.source_field;
+
+          const universalField =
+            suggestion
+              .suggested_universal_field;
+
+          const confidence =
+            suggestion.confidence || 0;
+
+
+          if (
+            field &&
+            universalField &&
+            confidence >= 0.70
+          ) {
+
+            initial[field] =
+              universalField;
+
+          }
+
+        });
+
+
+      // ==================================================
+      // DETERMINISTIC SUGGESTIONS
+      // ==================================================
+      // Deterministic rules override AI suggestions.
+      // This keeps known/high-confidence rules preferred.
+      // ==================================================
+
       data.deterministicSuggestions
         ?.forEach((suggestion) => {
 
@@ -1303,6 +1349,7 @@ function UnknownAnalysis() {
     } finally {
 
       setLoading(false);
+
     }
   }
 
@@ -1316,6 +1363,31 @@ function UnknownAnalysis() {
       ...previous,
       [field]: value,
     }));
+
+  }
+
+
+  function findAiSuggestion(field) {
+
+    return analysis
+      ?.aiSuggestions
+      ?.find(
+        (suggestion) =>
+          suggestion.source_field === field
+      );
+
+  }
+
+
+  function findDeterministicSuggestion(field) {
+
+    return analysis
+      ?.deterministicSuggestions
+      ?.find(
+        (suggestion) =>
+          suggestion.sourceField === field
+      );
+
   }
 
 
@@ -1390,6 +1462,7 @@ function UnknownAnalysis() {
     } finally {
 
       setApproving(false);
+
     }
   }
 
@@ -1401,6 +1474,7 @@ function UnknownAnalysis() {
         <Loading />
       </Page>
     );
+
   }
 
 
@@ -1413,6 +1487,7 @@ function UnknownAnalysis() {
         </EmptyState>
       </Page>
     );
+
   }
 
 
@@ -1469,9 +1544,23 @@ function UnknownAnalysis() {
       <section className="panel">
 
         <PanelHeader
-          title="Field Mapping"
-          subtitle="Map vendor-specific fields into the universal schema"
+          title="AI Assisted Field Mapping"
+          subtitle="Deterministic rules and AI suggestions are combined before human approval"
         />
+
+
+        <div
+          style={{
+            marginBottom: "18px",
+            fontSize: "13px",
+            opacity: 0.8,
+          }}
+        >
+          AI Status:{" "}
+          <strong>
+            {analysis.aiStatus || "UNKNOWN"}
+          </strong>
+        </div>
 
 
         <div className="mapping-list">
@@ -1485,88 +1574,176 @@ function UnknownAnalysis() {
                 field === "token1"
             )
             .map(
-              ([field, value]) => (
+              ([field, value]) => {
 
-                <div
-                  className="mapping-row"
-                  key={field}
-                >
+                const aiSuggestion =
+                  findAiSuggestion(field);
 
-                  <div>
+                const deterministicSuggestion =
+                  findDeterministicSuggestion(
+                    field
+                  );
 
-                    <strong>
-                      {field}
-                    </strong>
+                return (
 
-                    <small>
-                      {String(value)}
-                    </small>
+                  <div
+                    className="mapping-row"
+                    key={field}
+                  >
+
+                    <div>
+
+                      <strong>
+                        {field}
+                      </strong>
+
+                      <small>
+                        {String(value)}
+                      </small>
+
+
+                      {deterministicSuggestion && (
+
+                        <small
+                          style={{
+                            display: "block",
+                            marginTop: "6px",
+                          }}
+                        >
+                          Rule:{" "}
+                          <strong>
+                            {
+                              deterministicSuggestion
+                                .suggestedUniversalField
+                            }
+                          </strong>
+                          {" · "}
+                          {Math.round(
+                            (
+                              deterministicSuggestion
+                                .confidence || 0
+                            ) * 100
+                          )}
+                          %
+                        </small>
+
+                      )}
+
+
+                      {aiSuggestion && (
+
+                        <small
+                          style={{
+                            display: "block",
+                            marginTop: "4px",
+                          }}
+                        >
+                          AI:{" "}
+                          <strong>
+                            {
+                              aiSuggestion
+                                .suggested_universal_field
+                            }
+                          </strong>
+                          {" · "}
+                          {Math.round(
+                            (
+                              aiSuggestion
+                                .confidence || 0
+                            ) * 100
+                          )}
+                          %
+                        </small>
+
+                      )}
+
+                    </div>
+
+
+                    <span className="mapping-arrow">
+                      →
+                    </span>
+
+
+                    <select
+                      value={
+                        mappings[field] || ""
+                      }
+                      onChange={(event) =>
+                        changeMapping(
+                          field,
+                          event.target.value
+                        )
+                      }
+                    >
+
+                      <option value="">
+                        Ignore
+                      </option>
+
+                      <option value="source_ip">
+                        source_ip
+                      </option>
+
+                      <option value="destination_ip">
+                        destination_ip
+                      </option>
+
+                      <option value="destination_host">
+                        destination_host
+                      </option>
+
+                      <option value="source_port">
+                        source_port
+                      </option>
+
+                      <option value="destination_port">
+                        destination_port
+                      </option>
+
+                      <option value="username">
+                        username
+                      </option>
+
+                      <option value="action">
+                        action
+                      </option>
+
+                      <option value="severity">
+                        severity
+                      </option>
+
+                      <option value="protocol">
+                        protocol
+                      </option>
+
+                      <option value="process">
+                        process
+                      </option>
+
+                      <option value="outcome">
+                        outcome
+                      </option>
+
+                      <option value="host">
+                        host
+                      </option>
+
+                      <option value="timestamp">
+                        timestamp
+                      </option>
+
+                      <option value="message">
+                        message
+                      </option>
+
+                    </select>
 
                   </div>
 
+                );
 
-                  <span className="mapping-arrow">
-                    →
-                  </span>
-
-
-                  <select
-                    value={
-                      mappings[field] || ""
-                    }
-                    onChange={(event) =>
-                      changeMapping(
-                        field,
-                        event.target.value
-                      )
-                    }
-                  >
-
-                    <option value="">
-                      Ignore
-                    </option>
-
-                    <option value="source_ip">
-                      source_ip
-                    </option>
-
-                    <option value="destination_ip">
-                      destination_ip
-                    </option>
-
-                    <option value="destination_host">
-                      destination_host
-                    </option>
-
-                    <option value="destination_port">
-                      destination_port
-                    </option>
-
-                    <option value="username">
-                      username
-                    </option>
-
-                    <option value="action">
-                      action
-                    </option>
-
-                    <option value="severity">
-                      severity
-                    </option>
-
-                    <option value="host">
-                      host
-                    </option>
-
-                    <option value="timestamp">
-                      timestamp
-                    </option>
-
-                  </select>
-
-                </div>
-
-              )
+              }
             )}
 
         </div>
@@ -1608,7 +1785,6 @@ function UnknownAnalysis() {
     </Page>
   );
 }
-
 
 /* =========================================================
    PARSER REGISTRY
