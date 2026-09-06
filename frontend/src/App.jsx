@@ -14,9 +14,7 @@ import {
 import api from "./api";
 
 
-/* =========================================================
-   APP
-========================================================= */
+/* Main application routing and shared security operations shell. */
 
 export default function App() {
   return (
@@ -70,9 +68,7 @@ export default function App() {
 }
 
 
-/* =========================================================
-   SIDEBAR
-========================================================= */
+/* Primary navigation for the ULPF analyst interface. */
 
 function Sidebar() {
 
@@ -126,7 +122,7 @@ function Sidebar() {
       </div>
 
       <div className="sidebar-label">
-        PLATFORM
+        SECURITY PLATFORM
       </div>
 
       <nav className="nav">
@@ -162,7 +158,9 @@ function Sidebar() {
 
         <div className="engine-status">
 
-          <span className="green-dot" />
+          <span className="status-pulse">
+            <span className="green-dot" />
+          </span>
 
           <div>
             <strong>
@@ -170,7 +168,7 @@ function Sidebar() {
             </strong>
 
             <small>
-              Online
+              All systems operational
             </small>
           </div>
 
@@ -183,14 +181,15 @@ function Sidebar() {
 }
 
 
-/* =========================================================
-   DASHBOARD
-========================================================= */
+/* Dashboard presenting overall ingestion and normalization activity. */
 
 function Dashboard() {
 
-  const [logs, setLogs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [logs, setLogs] =
+    useState([]);
+
+  const [loading, setLoading] =
+    useState(true);
 
   useEffect(() => {
     loadLogs();
@@ -225,53 +224,106 @@ function Dashboard() {
   const normalized =
     logs.filter(
       (log) =>
-        log.processingStatus === "NORMALIZED"
+        log.processingStatus ===
+        "NORMALIZED"
     ).length;
 
   const review =
     logs.filter(
       (log) =>
-        log.processingStatus === "NEEDS_REVIEW"
+        log.processingStatus ===
+        "NEEDS_REVIEW"
     ).length;
 
   const failed =
     logs.filter(
       (log) =>
-        log.processingStatus === "FAILED"
+        log.processingStatus ===
+        "FAILED"
     ).length;
+
+  const normalizationRate =
+    logs.length
+      ? Math.round(
+          (normalized / logs.length) * 100
+        )
+      : 0;
 
   return (
     <Page>
 
       <PageHeader
+        eyebrow="SECURITY OPERATIONS"
         title="Security Event Overview"
         subtitle="Unified visibility across heterogeneous log sources"
       />
 
+      <div className="hero-strip">
+
+        <div>
+
+          <span className="hero-kicker">
+            UNIVERSAL LOG PIPELINE
+          </span>
+
+          <h2>
+            From raw telemetry to
+            investigation-ready events.
+          </h2>
+
+          <p>
+            Preserve, detect, parse, normalize
+            and investigate heterogeneous events
+            through one extensible pipeline.
+          </p>
+
+        </div>
+
+        <div className="hero-rate">
+
+          <strong>
+            {normalizationRate}%
+          </strong>
+
+          <span>
+            normalization rate
+          </span>
+
+        </div>
+
+      </div>
+
       <div className="stats-grid">
 
         <StatCard
+          icon="◎"
           title="Total Events"
           value={logs.length}
           description="Raw forensic events"
         />
 
         <StatCard
+          icon="✓"
           title="Normalized"
           value={normalized}
           description="Universal schema"
+          tone="success"
         />
 
         <StatCard
+          icon="?"
           title="Needs Review"
           value={review}
           description="Unknown formats"
+          tone="warning"
         />
 
         <StatCard
+          icon="!"
           title="Failed"
           value={failed}
           description="Processing failures"
+          tone="danger"
         />
 
       </div>
@@ -280,7 +332,7 @@ function Dashboard() {
 
         <PanelHeader
           title="Recent Events"
-          subtitle="Latest logs received by ULPF"
+          subtitle="Latest logs received by the universal preprocessing pipeline"
         />
 
         {loading
@@ -300,16 +352,30 @@ function Dashboard() {
 
 
 function StatCard({
+  icon,
   title,
   value,
   description,
+  tone = "",
 }) {
 
   return (
-    <div className="stat-card">
+    <div
+      className={
+        `stat-card ${tone}`
+      }
+    >
 
-      <div className="stat-title">
-        {title}
+      <div className="stat-top">
+
+        <div className="stat-icon">
+          {icon}
+        </div>
+
+        <div className="stat-title">
+          {title}
+        </div>
+
       </div>
 
       <div className="stat-value">
@@ -325,9 +391,7 @@ function StatCard({
 }
 
 
-/* =========================================================
-   INGESTION
-========================================================= */
+/* Manual log ingestion workflow for prototype testing and demonstrations. */
 
 function LogIngestion() {
 
@@ -345,6 +409,8 @@ function LogIngestion() {
 
   const [loading, setLoading] =
     useState(false);
+
+  const navigate = useNavigate();
 
   async function submitLog(event) {
 
@@ -403,24 +469,36 @@ function LogIngestion() {
     <Page>
 
       <PageHeader
+        eyebrow="INGESTION"
         title="Log Ingestion"
-        subtitle="Submit heterogeneous logs into the preprocessing pipeline"
+        subtitle="Submit heterogeneous security telemetry into the preprocessing pipeline"
       />
 
       <div className="two-columns">
 
-        <section className="panel">
+        <section className="panel ingest-panel">
 
           <div className="panel-header">
 
             <div>
-              <h2>
-                Submit Event
-              </h2>
+
+              <div className="panel-title-row">
+
+                <span className="panel-icon">
+                  +
+                </span>
+
+                <h2>
+                  Submit Event
+                </h2>
+
+              </div>
 
               <p>
-                Original content is preserved before processing.
+                Original content is preserved before
+                any parsing or normalization occurs.
               </p>
+
             </div>
 
             <button
@@ -524,18 +602,44 @@ function LogIngestion() {
 
           <PanelHeader
             title="Processing Result"
-            subtitle="Detection and forensic metadata"
+            subtitle="Detection, integrity and processing metadata"
           />
 
           {!result ? (
 
-            <EmptyState>
-              Submit a log to see the result.
+            <EmptyState
+              icon="◈"
+              title="Awaiting event"
+            >
+              Submit a log to inspect its
+              detection and forensic metadata.
             </EmptyState>
 
           ) : (
 
             <div>
+
+              <div className="result-banner">
+
+                <div>
+
+                  <span>
+                    EVENT ACCEPTED
+                  </span>
+
+                  <strong>
+                    {result.sourceName}
+                  </strong>
+
+                </div>
+
+                <Badge
+                  value={
+                    result.processingStatus
+                  }
+                />
+
+              </div>
 
               <InfoRow
                 label="Raw Log ID"
@@ -546,7 +650,9 @@ function LogIngestion() {
                 label="Detected Format"
                 value={
                   <Badge
-                    value={result.detectedFormat}
+                    value={
+                      result.detectedFormat
+                    }
                   />
                 }
               />
@@ -555,7 +661,9 @@ function LogIngestion() {
                 label="Status"
                 value={
                   <Badge
-                    value={result.processingStatus}
+                    value={
+                      result.processingStatus
+                    }
                   />
                 }
               />
@@ -584,6 +692,18 @@ function LogIngestion() {
                 }
               />
 
+              <button
+                type="button"
+                className="secondary-button full-button"
+                onClick={() =>
+                  navigate(
+                    `/logs/${result.id}`
+                  )
+                }
+              >
+                Investigate Event →
+              </button>
+
             </div>
 
           )}
@@ -597,9 +717,7 @@ function LogIngestion() {
 }
 
 
-/* =========================================================
-   LOG EXPLORER
-========================================================= */
+/* Searchable event list linking raw telemetry to investigation details. */
 
 function LogExplorer() {
 
@@ -608,6 +726,9 @@ function LogExplorer() {
 
   const [loading, setLoading] =
     useState(true);
+
+  const [search, setSearch] =
+    useState("");
 
   useEffect(() => {
     loadLogs();
@@ -636,19 +757,78 @@ function LogExplorer() {
     }
   }
 
+  const filteredLogs =
+    logs.filter((log) => {
+
+      const query =
+        search.toLowerCase();
+
+      return (
+        log.sourceName
+          ?.toLowerCase()
+          .includes(query) ||
+        log.sourceType
+          ?.toLowerCase()
+          .includes(query) ||
+        log.detectedFormat
+          ?.toLowerCase()
+          .includes(query) ||
+        log.processingStatus
+          ?.toLowerCase()
+          .includes(query) ||
+        log.id
+          ?.toLowerCase()
+          .includes(query)
+      );
+    });
+
   return (
     <Page>
 
       <PageHeader
+        eyebrow="INVESTIGATION"
         title="Log Explorer"
-        subtitle="Investigate raw and normalized security events"
+        subtitle="Investigate raw and normalized security events with complete traceability"
       />
 
       <section className="panel">
 
+        <div className="explorer-toolbar">
+
+          <div>
+
+            <strong>
+              Event Stream
+            </strong>
+
+            <span>
+              {filteredLogs.length}
+              {" "}
+              events visible
+            </span>
+
+          </div>
+
+          <input
+            className="search-input"
+            value={search}
+            onChange={(event) =>
+              setSearch(
+                event.target.value
+              )
+            }
+            placeholder="Search source, format, status or ID..."
+          />
+
+        </div>
+
         {loading
           ? <Loading />
-          : <LogTable logs={logs} />
+          : (
+            <LogTable
+              logs={filteredLogs}
+            />
+          )
         }
 
       </section>
@@ -665,8 +845,11 @@ function LogTable({ logs }) {
   if (!logs?.length) {
 
     return (
-      <EmptyState>
-        No logs found.
+      <EmptyState
+        icon="☷"
+        title="No events found"
+      >
+        No logs match the current view.
       </EmptyState>
     );
   }
@@ -684,6 +867,7 @@ function LogTable({ logs }) {
             <th>TYPE</th>
             <th>FORMAT</th>
             <th>STATUS</th>
+            <th />
           </tr>
 
         </thead>
@@ -708,7 +892,17 @@ function LogTable({ logs }) {
               </td>
 
               <td>
-                {log.sourceName}
+
+                <div className="source-cell">
+
+                  <span className="source-dot" />
+
+                  <strong>
+                    {log.sourceName || "-"}
+                  </strong>
+
+                </div>
+
               </td>
 
               <td>
@@ -717,14 +911,22 @@ function LogTable({ logs }) {
 
               <td>
                 <Badge
-                  value={log.detectedFormat}
+                  value={
+                    log.detectedFormat
+                  }
                 />
               </td>
 
               <td>
                 <Badge
-                  value={log.processingStatus}
+                  value={
+                    log.processingStatus
+                  }
                 />
+              </td>
+
+              <td className="row-arrow">
+                →
               </td>
 
             </tr>
@@ -740,9 +942,7 @@ function LogTable({ logs }) {
 }
 
 
-/* =========================================================
-   LOG DETAILS
-========================================================= */
+/* Forensic comparison between immutable raw evidence and normalized event. */
 
 function LogDetails() {
 
@@ -794,9 +994,14 @@ function LogDetails() {
 
     return (
       <Page>
-        <EmptyState>
-          Log not found.
+
+        <EmptyState
+          icon="!"
+          title="Event unavailable"
+        >
+          The requested log could not be loaded.
         </EmptyState>
+
       </Page>
     );
   }
@@ -812,19 +1017,25 @@ function LogDetails() {
     details.normalizedLog ||
     null;
 
+  const rawContent =
+    raw?.rawContent ||
+    raw?.content ||
+    "";
+
 
   return (
     <Page>
 
       <PageHeader
+        eyebrow="FORENSIC INVESTIGATION"
         title="Event Investigation"
-        subtitle="Original forensic evidence compared with normalized representation"
+        subtitle="Compare immutable source evidence with its universal normalized representation"
       />
 
 
       <div className="trace-bar">
 
-        <div>
+        <div className="trace-main">
 
           <span>
             RAW LOG ID
@@ -844,7 +1055,9 @@ function LogDetails() {
           </span>
 
           <Badge
-            value={raw?.detectedFormat}
+            value={
+              raw?.detectedFormat
+            }
           />
 
         </div>
@@ -857,7 +1070,9 @@ function LogDetails() {
           </span>
 
           <Badge
-            value={raw?.processingStatus}
+            value={
+              raw?.processingStatus
+            }
           />
 
         </div>
@@ -867,27 +1082,51 @@ function LogDetails() {
 
       <div className="comparison-grid">
 
-        <section className="comparison-panel">
+        <section className="comparison-panel raw-panel">
 
           <div className="comparison-header">
 
-            <strong>
-              ORIGINAL / RAW LOG
-            </strong>
+            <div>
 
-            <span>
+              <div className="comparison-heading">
+                ORIGINAL / RAW LOG
+              </div>
+
+              <div className="comparison-subtitle">
+                Immutable forensic evidence
+              </div>
+
+            </div>
+
+            <div className="evidence-chip">
               FORENSIC EVIDENCE
-            </span>
+            </div>
 
           </div>
 
 
-          <pre className="raw-log">
+          <div className="code-window">
 
-            {raw?.rawContent ||
-              "Raw content unavailable"}
+            <div className="code-window-bar">
 
-          </pre>
+              <div className="window-dots">
+                <span />
+                <span />
+                <span />
+              </div>
+
+              <span>
+                raw-event.log
+              </span>
+
+            </div>
+
+            <pre className="raw-log">
+              {rawContent ||
+                "Raw content unavailable"}
+            </pre>
+
+          </div>
 
 
           <div className="comparison-info">
@@ -903,8 +1142,23 @@ function LogDetails() {
             />
 
             <InfoRow
+              label="Detected Format"
+              value={
+                <Badge
+                  value={
+                    raw?.detectedFormat
+                  }
+                />
+              }
+            />
+
+            <InfoRow
               label="SHA-256"
-              value={raw?.sha256Hash}
+              value={
+                <code className="hash-value">
+                  {raw?.sha256Hash || "-"}
+                </code>
+              }
             />
 
             <InfoRow
@@ -921,25 +1175,37 @@ function LogDetails() {
         </section>
 
 
-        <section className="comparison-panel">
+        <section className="comparison-panel normalized-panel">
 
           <div className="comparison-header">
 
-            <strong>
-              NORMALIZED EVENT
-            </strong>
+            <div>
 
-            <span>
+              <div className="comparison-heading">
+                NORMALIZED EVENT
+              </div>
+
+              <div className="comparison-subtitle">
+                Human-readable universal schema
+              </div>
+
+            </div>
+
+            <div className="universal-chip">
               UNIVERSAL SCHEMA
-            </span>
+            </div>
 
           </div>
 
 
           {!normalized ? (
 
-            <EmptyState>
-              Event has not been normalized.
+            <EmptyState
+              icon="◇"
+              title="Not normalized"
+            >
+              This event does not yet have
+              a normalized representation.
             </EmptyState>
 
           ) : (
@@ -966,73 +1232,183 @@ function NormalizedViewer({
   let data =
     normalized.normalizedData ||
     normalized.data ||
-    normalized;
+    {};
 
   if (typeof data === "string") {
 
     try {
 
-      data = JSON.parse(data);
+      data =
+        JSON.parse(data);
 
     } catch {
 
-      // Keep string if not JSON.
+      data = {
+        message: data,
+      };
     }
   }
 
+  const event =
+    data?.event || {};
+
+  const source =
+    data?.source || {};
+
+  const destination =
+    data?.destination || {};
+
+  const user =
+    data?.user || {};
+
+  const metadata =
+    data?.metadata || {};
+
 
   return (
-    <div>
+    <div className="normalized-viewer">
+
+      <div className="normalized-summary">
+
+        <div>
+
+          <span>
+            PARSER
+          </span>
+
+          <strong>
+            {normalized.parserUsed ||
+              metadata.parserUsed ||
+              "Unknown"}
+          </strong>
+
+        </div>
+
+        <div>
+
+          <span>
+            VALIDATION
+          </span>
+
+          <Badge
+            value={
+              normalized.validationStatus ||
+              "VALID"
+            }
+          />
+
+        </div>
+
+        <div>
+
+          <span>
+            PROCESSED
+          </span>
+
+          <strong>
+            {formatDate(
+              normalized.processedAt ||
+              metadata.processedAt
+            )}
+          </strong>
+
+        </div>
+
+      </div>
+
 
       <div className="human-grid">
 
         <HumanCard
+          icon="⚡"
           label="Action"
           value={
-            data?.event?.action ||
+            event.action ||
+            data.action ||
             "-"
           }
         />
 
         <HumanCard
+          icon="✓"
           label="Outcome"
           value={
-            data?.event?.outcome ||
+            event.outcome ||
+            data.outcome ||
             "-"
           }
         />
 
         <HumanCard
-          label="Source IP"
-          value={
-            data?.source?.ip ||
-            data?.source?.address ||
-            "-"
-          }
-        />
-
-        <HumanCard
-          label="Destination"
-          value={
-            data?.destination?.ip ||
-            data?.destination?.host ||
-            "-"
-          }
-        />
-
-        <HumanCard
-          label="User"
-          value={
-            data?.user?.name ||
-            data?.user?.username ||
-            "-"
-          }
-        />
-
-        <HumanCard
+          icon="!"
           label="Severity"
           value={
-            data?.event?.severity ||
+            event.severity ||
+            data.severity ||
+            "-"
+          }
+        />
+
+        <HumanCard
+          icon="◈"
+          label="Category"
+          value={
+            event.category ||
+            data.category ||
+            "-"
+          }
+        />
+
+        <HumanCard
+          icon="↗"
+          label="Source IP"
+          value={
+            source.ip ||
+            source.address ||
+            data.source_ip ||
+            "-"
+          }
+        />
+
+        <HumanCard
+          icon="▣"
+          label="Source Host"
+          value={
+            source.host ||
+            data.host ||
+            "-"
+          }
+        />
+
+        <HumanCard
+          icon="↘"
+          label="Destination"
+          value={
+            destination.ip ||
+            destination.host ||
+            data.destination_ip ||
+            data.destination_host ||
+            "-"
+          }
+        />
+
+        <HumanCard
+          icon=":"
+          label="Destination Port"
+          value={
+            destination.port ??
+            data.destination_port ??
+            "-"
+          }
+        />
+
+        <HumanCard
+          icon="●"
+          label="User"
+          value={
+            user.name ||
+            user.username ||
+            data.username ||
             "-"
           }
         />
@@ -1040,31 +1416,52 @@ function NormalizedViewer({
       </div>
 
 
-      <div className="json-label">
-        NORMALIZED JSON
+      <div className="json-section-header">
+
+        <div>
+
+          <span className="section-label">
+            NORMALIZED JSON
+          </span>
+
+          <strong>
+            Universal event representation
+          </strong>
+
+        </div>
+
+        <span className="json-ready">
+          JSON
+        </span>
+
       </div>
 
 
-      <pre className="normalized-json">
-        {JSON.stringify(
-          data,
-          null,
-          2
-        )}
-      </pre>
+      <div className="code-window normalized-code-window">
 
+        <div className="code-window-bar">
 
-      {normalized.parserUsed && (
+          <div className="window-dots">
+            <span />
+            <span />
+            <span />
+          </div>
 
-        <div className="parser-used">
-          Parser:
-          {" "}
-          <strong>
-            {normalized.parserUsed}
-          </strong>
+          <span>
+            universal-event.json
+          </span>
+
         </div>
 
-      )}
+        <pre className="normalized-json">
+          {JSON.stringify(
+            data,
+            null,
+            2
+          )}
+        </pre>
+
+      </div>
 
     </div>
   );
@@ -1072,6 +1469,7 @@ function NormalizedViewer({
 
 
 function HumanCard({
+  icon,
   label,
   value,
 }) {
@@ -1079,12 +1477,25 @@ function HumanCard({
   return (
     <div className="human-card">
 
-      <span>
-        {label}
-      </span>
+      <div className="human-card-top">
+
+        <span className="human-icon">
+          {icon}
+        </span>
+
+        <span>
+          {label}
+        </span>
+
+      </div>
 
       <strong>
-        {String(value)}
+        {value === null ||
+        value === undefined ||
+        value === ""
+          ? "-"
+          : String(value)
+        }
       </strong>
 
     </div>
@@ -1092,9 +1503,7 @@ function HumanCard({
 }
 
 
-/* =========================================================
-   UNKNOWN LOGS
-========================================================= */
+/* Review queue for logs that could not be handled by registered parsers. */
 
 function UnknownLogs() {
 
@@ -1140,12 +1549,18 @@ function UnknownLogs() {
     <Page>
 
       <PageHeader
+        eyebrow="ADAPTIVE ONBOARDING"
         title="Unknown Log Review"
-        subtitle="Onboard unsupported sources without creating Java parser classes"
+        subtitle="Analyze unsupported formats and convert them into reusable dynamic parsers"
       />
 
 
       <section className="panel">
+
+        <PanelHeader
+          title="Review Queue"
+          subtitle="Events awaiting structure analysis and field mapping"
+        />
 
         {loading ? (
 
@@ -1153,8 +1568,11 @@ function UnknownLogs() {
 
         ) : !logs.length ? (
 
-          <EmptyState>
-            No logs require review.
+          <EmptyState
+            icon="✓"
+            title="Review queue clear"
+          >
+            No logs currently require analyst review.
           </EmptyState>
 
         ) : (
@@ -1175,9 +1593,17 @@ function UnknownLogs() {
 
                 <div className="card-header">
 
-                  <strong>
-                    {log.sourceName}
-                  </strong>
+                  <div>
+
+                    <span className="card-kicker">
+                      UNKNOWN SOURCE
+                    </span>
+
+                    <strong>
+                      {log.sourceName}
+                    </strong>
+
+                  </div>
 
                   <Badge
                     value={
@@ -1218,14 +1644,14 @@ function UnknownLogs() {
 }
 
 
-/* =========================================================
-   UNKNOWN ANALYSIS
-========================================================= */
+/* Human-in-the-loop workflow combining deterministic and AI field mappings. */
 
 function UnknownAnalysis() {
 
   const { id } = useParams();
-  const navigate = useNavigate();
+
+  const navigate =
+    useNavigate();
 
   const [analysis, setAnalysis] =
     useState(null);
@@ -1279,16 +1705,6 @@ function UnknownAnalysis() {
       const initial = {};
 
 
-      // ==================================================
-      // AI SUGGESTIONS
-      // ==================================================
-      // AI fills fields that deterministic rules
-      // do not already understand.
-      //
-      // We only auto-select predictions with
-      // reasonable confidence.
-      // ==================================================
-
       data.aiSuggestions
         ?.forEach((suggestion) => {
 
@@ -1317,13 +1733,6 @@ function UnknownAnalysis() {
         });
 
 
-      // ==================================================
-      // DETERMINISTIC SUGGESTIONS
-      // ==================================================
-      // Deterministic rules override AI suggestions.
-      // This keeps known/high-confidence rules preferred.
-      // ==================================================
-
       data.deterministicSuggestions
         ?.forEach((suggestion) => {
 
@@ -1349,7 +1758,6 @@ function UnknownAnalysis() {
     } finally {
 
       setLoading(false);
-
     }
   }
 
@@ -1373,21 +1781,23 @@ function UnknownAnalysis() {
       ?.aiSuggestions
       ?.find(
         (suggestion) =>
-          suggestion.source_field === field
+          suggestion.source_field ===
+          field
       );
-
   }
 
 
-  function findDeterministicSuggestion(field) {
+  function findDeterministicSuggestion(
+    field
+  ) {
 
     return analysis
       ?.deterministicSuggestions
       ?.find(
         (suggestion) =>
-          suggestion.sourceField === field
+          suggestion.sourceField ===
+          field
       );
-
   }
 
 
@@ -1462,7 +1872,6 @@ function UnknownAnalysis() {
     } finally {
 
       setApproving(false);
-
     }
   }
 
@@ -1474,7 +1883,6 @@ function UnknownAnalysis() {
         <Loading />
       </Page>
     );
-
   }
 
 
@@ -1482,12 +1890,16 @@ function UnknownAnalysis() {
 
     return (
       <Page>
-        <EmptyState>
-          Analysis unavailable.
+
+        <EmptyState
+          icon="!"
+          title="Analysis unavailable"
+        >
+          Structure analysis could not be loaded.
         </EmptyState>
+
       </Page>
     );
-
   }
 
 
@@ -1495,20 +1907,40 @@ function UnknownAnalysis() {
     <Page>
 
       <PageHeader
+        eyebrow="AI ASSISTED ONBOARDING"
         title="Unknown Log Analyzer"
-        subtitle="Review detected structure and approve reusable field mappings"
+        subtitle="Review detected structure, AI suggestions and reusable field mappings"
       />
 
 
       <section className="panel">
 
-        <div className="section-label">
-          ORIGINAL EVENT
-        </div>
+        <PanelHeader
+          title="Original Event"
+          subtitle="Immutable source content awaiting parser onboarding"
+        />
 
-        <pre className="raw-log">
-          {analysis.rawContent}
-        </pre>
+        <div className="code-window">
+
+          <div className="code-window-bar">
+
+            <div className="window-dots">
+              <span />
+              <span />
+              <span />
+            </div>
+
+            <span>
+              unknown-event.log
+            </span>
+
+          </div>
+
+          <pre className="raw-log">
+            {analysis.rawContent}
+          </pre>
+
+        </div>
 
       </section>
 
@@ -1516,6 +1948,7 @@ function UnknownAnalysis() {
       <div className="analysis-grid">
 
         <HumanCard
+          icon="|"
           label="Delimiter"
           value={
             analysis.detectedDelimiter
@@ -1523,6 +1956,7 @@ function UnknownAnalysis() {
         />
 
         <HumanCard
+          icon="="
           label="KV Separator"
           value={
             analysis
@@ -1531,6 +1965,7 @@ function UnknownAnalysis() {
         />
 
         <HumanCard
+          icon="◈"
           label="Signature"
           value={
             analysis
@@ -1543,23 +1978,33 @@ function UnknownAnalysis() {
 
       <section className="panel">
 
-        <PanelHeader
-          title="AI Assisted Field Mapping"
-          subtitle="Deterministic rules and AI suggestions are combined before human approval"
-        />
+        <div className="mapping-header">
 
+          <PanelHeader
+            title="AI Assisted Field Mapping"
+            subtitle="AI fills gaps, deterministic rules take priority, analyst keeps final control"
+          />
 
-        <div
-          style={{
-            marginBottom: "18px",
-            fontSize: "13px",
-            opacity: 0.8,
-          }}
-        >
-          AI Status:{" "}
-          <strong>
-            {analysis.aiStatus || "UNKNOWN"}
-          </strong>
+          <div
+            className={
+              `ai-status ${
+                analysis.aiStatus ===
+                "AVAILABLE"
+                  ? "online"
+                  : ""
+              }`
+            }
+          >
+
+            <span className="green-dot" />
+
+            AI
+            {" "}
+            {analysis.aiStatus ||
+              "UNKNOWN"}
+
+          </div>
+
         </div>
 
 
@@ -1591,71 +2036,71 @@ function UnknownAnalysis() {
                     key={field}
                   >
 
-                    <div>
+                    <div className="mapping-source">
 
                       <strong>
                         {field}
                       </strong>
 
-                      <small>
+                      <code>
                         {String(value)}
-                      </small>
+                      </code>
 
 
-                      {deterministicSuggestion && (
+                      <div className="suggestion-stack">
 
-                        <small
-                          style={{
-                            display: "block",
-                            marginTop: "6px",
-                          }}
-                        >
-                          Rule:{" "}
-                          <strong>
-                            {
-                              deterministicSuggestion
-                                .suggestedUniversalField
-                            }
-                          </strong>
-                          {" · "}
-                          {Math.round(
-                            (
-                              deterministicSuggestion
-                                .confidence || 0
-                            ) * 100
-                          )}
-                          %
-                        </small>
+                        {deterministicSuggestion && (
 
-                      )}
+                          <span className="suggestion-chip rule">
+
+                            RULE
+
+                            <strong>
+                              {
+                                deterministicSuggestion
+                                  .suggestedUniversalField
+                              }
+                            </strong>
+
+                            {Math.round(
+                              (
+                                deterministicSuggestion
+                                  .confidence || 0
+                              ) * 100
+                            )}
+                            %
+
+                          </span>
+
+                        )}
 
 
-                      {aiSuggestion && (
+                        {aiSuggestion && (
 
-                        <small
-                          style={{
-                            display: "block",
-                            marginTop: "4px",
-                          }}
-                        >
-                          AI:{" "}
-                          <strong>
-                            {
-                              aiSuggestion
-                                .suggested_universal_field
-                            }
-                          </strong>
-                          {" · "}
-                          {Math.round(
-                            (
-                              aiSuggestion
-                                .confidence || 0
-                            ) * 100
-                          )}
-                          %
-                        </small>
+                          <span className="suggestion-chip ai">
 
-                      )}
+                            AI
+
+                            <strong>
+                              {
+                                aiSuggestion
+                                  .suggested_universal_field
+                              }
+                            </strong>
+
+                            {Math.round(
+                              (
+                                aiSuggestion
+                                  .confidence || 0
+                              ) * 100
+                            )}
+                            %
+
+                          </span>
+
+                        )}
+
+                      </div>
 
                     </div>
 
@@ -1751,34 +2196,52 @@ function UnknownAnalysis() {
       </section>
 
 
-      <section className="panel">
+      <section className="panel parser-create-panel">
 
-        <label>
-          Parser Name
-        </label>
+        <div>
 
-        <input
-          value={parserName}
-          onChange={(event) =>
-            setParserName(
-              event.target.value
-            )
-          }
-        />
+          <span className="card-kicker">
+            DYNAMIC PARSER
+          </span>
+
+          <h2>
+            Register reusable parser
+          </h2>
+
+          <p>
+            Future events matching this
+            signature can be normalized
+            automatically.
+          </p>
+
+        </div>
+
+        <div className="parser-create-form">
+
+          <input
+            value={parserName}
+            onChange={(event) =>
+              setParserName(
+                event.target.value
+              )
+            }
+          />
 
 
-        <button
-          className="primary-button"
-          onClick={approve}
-          disabled={approving}
-        >
+          <button
+            className="primary-button"
+            onClick={approve}
+            disabled={approving}
+          >
 
-          {approving
-            ? "Creating Parser..."
-            : "Create Parser & Reprocess"
-          }
+            {approving
+              ? "Creating Parser..."
+              : "Create Parser & Reprocess"
+            }
 
-        </button>
+          </button>
+
+        </div>
 
       </section>
 
@@ -1786,9 +2249,8 @@ function UnknownAnalysis() {
   );
 }
 
-/* =========================================================
-   PARSER REGISTRY
-========================================================= */
+
+/* Registry of parser definitions created through analyst-approved onboarding. */
 
 function ParserRegistry() {
 
@@ -1833,12 +2295,18 @@ function ParserRegistry() {
     <Page>
 
       <PageHeader
+        eyebrow="PARSER INTELLIGENCE"
         title="Parser Registry"
-        subtitle="Reusable dynamically onboarded source definitions"
+        subtitle="Reusable source definitions dynamically onboarded without backend code changes"
       />
 
 
       <section className="panel">
+
+        <PanelHeader
+          title="Registered Parsers"
+          subtitle={`${parsers.length} dynamic parser definitions available`}
+        />
 
         {loading ? (
 
@@ -1846,8 +2314,12 @@ function ParserRegistry() {
 
         ) : !parsers.length ? (
 
-          <EmptyState>
-            No dynamic parsers found.
+          <EmptyState
+            icon="⚙"
+            title="No dynamic parsers"
+          >
+            Approve an unknown event to register
+            the first reusable parser definition.
           </EmptyState>
 
         ) : (
@@ -1863,9 +2335,17 @@ function ParserRegistry() {
 
                 <div className="card-header">
 
-                  <strong>
-                    {parser.name}
-                  </strong>
+                  <div>
+
+                    <span className="card-kicker">
+                      DYNAMIC PARSER
+                    </span>
+
+                    <strong>
+                      {parser.name}
+                    </strong>
+
+                  </div>
 
                   <Badge
                     value={
@@ -1881,7 +2361,9 @@ function ParserRegistry() {
                 <InfoRow
                   label="Signature"
                   value={
-                    parser.signaturePrefix
+                    <code>
+                      {parser.signaturePrefix}
+                    </code>
                   }
                 />
 
@@ -1923,9 +2405,7 @@ function ParserRegistry() {
 }
 
 
-/* =========================================================
-   COMMON
-========================================================= */
+/* Shared presentation components used across the analyst interface. */
 
 function Page({ children }) {
 
@@ -1938,6 +2418,7 @@ function Page({ children }) {
 
 
 function PageHeader({
+  eyebrow,
   title,
   subtitle,
 }) {
@@ -1946,6 +2427,12 @@ function PageHeader({
     <header className="page-header">
 
       <div>
+
+        {eyebrow && (
+          <div className="page-eyebrow">
+            {eyebrow}
+          </div>
+        )}
 
         <h1>
           {title}
@@ -1962,7 +2449,7 @@ function PageHeader({
 
         <span className="green-dot" />
 
-        LOCAL / AIR-GAPPED
+        DEPLOYED / AIR-GAP READY
 
       </div>
 
@@ -2001,6 +2488,11 @@ function InfoRow({
   value,
 }) {
 
+  const empty =
+    value === null ||
+    value === undefined ||
+    value === "";
+
   return (
     <div className="info-row">
 
@@ -2009,7 +2501,7 @@ function InfoRow({
       </span>
 
       <div>
-        {value || "-"}
+        {empty ? "-" : value}
       </div>
 
     </div>
@@ -2023,7 +2515,7 @@ function Badge({ value }) {
     value || "UNKNOWN";
 
   const className =
-    text
+    String(text)
       .toLowerCase()
       .replaceAll("_", "-");
 
@@ -2040,12 +2532,28 @@ function Badge({ value }) {
 
 
 function EmptyState({
+  icon = "◇",
+  title,
   children,
 }) {
 
   return (
     <div className="empty-state">
-      {children}
+
+      <div className="empty-icon">
+        {icon}
+      </div>
+
+      {title && (
+        <strong>
+          {title}
+        </strong>
+      )}
+
+      <span>
+        {children}
+      </span>
+
     </div>
   );
 }
@@ -2055,7 +2563,13 @@ function Loading() {
 
   return (
     <div className="loading">
-      Loading...
+
+      <span className="loader-ring" />
+
+      <span>
+        Loading security telemetry...
+      </span>
+
     </div>
   );
 }
@@ -2067,7 +2581,16 @@ function formatDate(value) {
     return "-";
   }
 
-  return new Date(
-    value
-  ).toLocaleString();
+  const date =
+    new Date(value);
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return String(value);
+  }
+
+  return date.toLocaleString();
 }

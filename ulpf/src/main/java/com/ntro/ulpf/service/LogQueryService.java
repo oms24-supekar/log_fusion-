@@ -1,6 +1,6 @@
 package com.ntro.ulpf.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ntro.ulpf.dto.LogDetailsResponse;
 import com.ntro.ulpf.dto.LogSummaryResponse;
@@ -13,8 +13,13 @@ import com.ntro.ulpf.repository.RawLogRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Provides query operations for raw and normalized logs used by the
+ * dashboard, log explorer, and forensic event investigation views.
+ */
 @Service
 public class LogQueryService {
 
@@ -84,7 +89,9 @@ public class LogQueryService {
         );
     }
 
-    private LogSummaryResponse toSummaryResponse(RawLog rawLog) {
+    private LogSummaryResponse toSummaryResponse(
+            RawLog rawLog
+    ) {
 
         return new LogSummaryResponse(
                 rawLog.getId(),
@@ -103,9 +110,11 @@ public class LogQueryService {
 
         try {
 
-            JsonNode normalizedJson =
-                    objectMapper.readTree(
-                            normalizedLog.getNormalizedData()
+            Map<String, Object> normalizedJson =
+                    objectMapper.readValue(
+                            normalizedLog.getNormalizedData(),
+                            new TypeReference<Map<String, Object>>() {
+                            }
                     );
 
             return new NormalizedLogDetailsResponse(
