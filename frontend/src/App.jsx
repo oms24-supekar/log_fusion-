@@ -44,11 +44,25 @@ function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="brand">
-        <img
-          src="/logfusion-logo.jpeg"
-          alt="LogFusion - Universal Log Pre-processing Framework"
+        <svg
           className="brand-logo-image"
-        />
+          viewBox="0 0 64 64"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M32 5 54 14v17c0 13-9 22-22 28C19 53 10 44 10 31V14L32 5Z"
+            fill="#102c40"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinejoin="round"
+          />
+          <g stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+            <path d="M28 23h14M28 32h14M28 41h8" />
+            <path d="M21 23h1M21 32h1M21 41h1" />
+          </g>
+        </svg>
+        <span className="brand-name">LogFusion</span>
       </div>
 
       <div className="sidebar-label">SECURITY PLATFORM</div>
