@@ -139,8 +139,21 @@ button {
 
 .nav-icon {
   width: 19px;
+  height: 20px;
+  flex-shrink: 0;
   text-align: center;
   color: #5fa7d5;
+}
+
+.nav-icon svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+.nav-item:focus-visible {
+  outline: 2px solid #59bde9;
+  outline-offset: 2px;
 }
 
 .sidebar-bottom {
@@ -605,7 +618,7 @@ textarea:focus { border-color: #367ca9; box-shadow: 0 0 0 3px rgba(54, 124, 169,
   .nav-item span:last-child,
   .sidebar-bottom { display: none; }
   .nav-item { justify-content: center; }
-  .nav-icon { width: auto; }
+  .nav-icon { width: 20px; }
   .main-content { margin-left: 72px; width: calc(100% - 72px); }
   .page { padding: 25px 16px 50px; }
   .page-header { flex-direction: column; }
@@ -614,6 +627,58 @@ textarea:focus { border-color: #367ca9; box-shadow: 0 0 0 3px rgba(54, 124, 169,
   .mapping-row { grid-template-columns: 1fr; }
   .mapping-arrow { transform: rotate(90deg); }
   .parser-create-form { flex-direction: column; }
+}
+
+/* Keep an icon rail visible; expand over the page without shifting content. */
+@media (hover: hover) and (pointer: fine) {
+  .sidebar {
+    width: 72px;
+    padding-left: 10px;
+    padding-right: 10px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    transition: width 220ms ease, box-shadow 220ms ease;
+  }
+
+  .sidebar:hover,
+  .sidebar:has(:focus-visible) {
+    width: 258px;
+    box-shadow: 16px 0 40px rgba(0, 0, 0, 0.35);
+  }
+
+  .sidebar .brand { padding: 4px 0 16px; }
+  .sidebar .brand-logo-image { width: 44px; height: 44px; }
+  .sidebar .brand-name { font-size: 24px; letter-spacing: -0.6px; }
+  .sidebar .nav-item { justify-content: flex-start; }
+  .sidebar .nav-icon { width: 20px; }
+  .sidebar .sidebar-label { display: block; }
+  .sidebar .nav-item span:last-child { display: inline; }
+  .sidebar .sidebar-bottom { display: block; }
+
+  .sidebar .brand-name,
+  .sidebar .sidebar-label,
+  .sidebar .nav-item span:last-child,
+  .sidebar .sidebar-bottom {
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 160ms ease;
+  }
+
+  .sidebar:is(:hover, :has(:focus-visible)) .brand-name,
+  .sidebar:is(:hover, :has(:focus-visible)) .sidebar-label,
+  .sidebar:is(:hover, :has(:focus-visible)) .nav-item span:last-child,
+  .sidebar:is(:hover, :has(:focus-visible)) .sidebar-bottom {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .main-content { margin-left: 72px; width: calc(100% - 72px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .sidebar * { transition: none !important; }
 }
 
 @media (max-width: 600px) {

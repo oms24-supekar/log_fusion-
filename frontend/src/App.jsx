@@ -32,6 +32,22 @@ export default function App() {
   );
 }
 
+function PageIcon({ path }) {
+  const paths = {
+    "/": "M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z",
+    "/ingest": "M12 16V3 M7 8l5-5 5 5 M4 14v6a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-6",
+    "/logs": "M14 20H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4 M7 7h8 M7 11h4 M7 15h3 M21 21l-3-3 M19 15a4 4 0 1 1-8 0 4 4 0 0 1 8 0",
+    "/unknown": "M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9l-6-6H9 M15 3v6h6 M9 12a3 3 0 0 1 6 0c0 2-3 2-3 4 M12 18h.01",
+    "/parsers": "M8 3v4 M8 11v10 M16 3v10 M16 17v4 M3 7h2 M11 7h10 M3 17h10 M19 17h2 M11 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0 M19 17a3 3 0 1 1-6 0 3 3 0 0 1 6 0",
+  };
+
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={paths[path]} />
+    </svg>
+  );
+}
+
 function Sidebar() {
   const items = [
     { path: "/", icon: "◈", label: "Dashboard" },
@@ -72,12 +88,14 @@ function Sidebar() {
           <NavLink
             key={item.path}
             to={item.path}
+            aria-label={item.label}
+            title={item.label}
             end={item.path === "/"}
             className={({ isActive }) =>
               isActive ? "nav-item active" : "nav-item"
             }
           >
-            <span className="nav-icon">{item.icon}</span>
+            <span className="nav-icon"><PageIcon path={item.path} /></span>
             <span>{item.label}</span>
           </NavLink>
         ))}
