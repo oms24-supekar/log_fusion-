@@ -311,6 +311,12 @@ function LogIngestion() {
 
   async function submitLog(event) {
     event.preventDefault();
+
+    if (!rawContent.trim() || !sourceName.trim()) {
+      alert("Please enter both a source name and raw log content before processing.");
+      return;
+    }
+
     setLoading(true);
     setResult(null);
 
@@ -323,7 +329,13 @@ function LogIngestion() {
       setResult(response.data);
     } catch (error) {
       console.error(error);
-      alert(error.response?.data?.message || "Log processing failed");
+      const backendMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        "Log processing failed";
+
+      alert(backendMessage);
     } finally {
       setLoading(false);
     }
