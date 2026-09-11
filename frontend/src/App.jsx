@@ -13,21 +13,116 @@ import {
 
 import api from "./api";
 
+
 export default function App() {
+  const [showIntro, setShowIntro] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowIntro(false);
+    }, 6200);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <div className="app-shell">
-      <Sidebar />
-      <main className="main-content">
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/ingest" element={<LogIngestion />} />
-          <Route path="/logs" element={<LogExplorer />} />
-          <Route path="/logs/:id" element={<LogDetails />} />
-          <Route path="/unknown" element={<UnknownLogs />} />
-          <Route path="/unknown/:id" element={<UnknownAnalysis />} />
-          <Route path="/parsers" element={<ParserRegistry />} />
-        </Routes>
-      </main>
+    <>
+      {showIntro && <LogoIntro />}
+
+      <div className={`app-shell ${showIntro ? "app-hidden" : "app-visible"}`}>
+        <Sidebar />
+
+        <main className="main-content">
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/ingest" element={<LogIngestion />} />
+            <Route path="/logs" element={<LogExplorer />} />
+            <Route path="/logs/:id" element={<LogDetails />} />
+            <Route path="/unknown" element={<UnknownLogs />} />
+            <Route path="/unknown/:id" element={<UnknownAnalysis />} />
+            <Route path="/parsers" element={<ParserRegistry />} />
+          </Routes>
+        </main>
+      </div>
+    </>
+  );
+}
+
+function LogoIntro() {
+  const word = ["L", "O", "G", " ", "F", "U", "S", "I", "O", "N"];
+
+  const panels = [
+    { className: "panel-1", x: "-125px", y: "-64px", rotate: "-24deg", delay: "1.9s" },
+    { className: "panel-2", x: "125px", y: "-60px", rotate: "22deg", delay: "1.96s" },
+    { className: "panel-3", x: "-140px", y: "14px", rotate: "-34deg", delay: "2.02s" },
+    { className: "panel-4", x: "140px", y: "16px", rotate: "32deg", delay: "2.08s" },
+    { className: "panel-5", x: "-92px", y: "96px", rotate: "-52deg", delay: "2.14s" },
+    { className: "panel-6", x: "92px", y: "98px", rotate: "52deg", delay: "2.2s" },
+    { className: "panel-7", x: "-18px", y: "-128px", rotate: "-16deg", delay: "2.26s" },
+    { className: "panel-8", x: "16px", y: "128px", rotate: "14deg", delay: "2.3s" },
+  ];
+
+  return (
+    <div className="logo-intro-screen">
+      <div className="logo-intro-container">
+        <div className="mechanical-stage" aria-label="LogFusion transformation">
+          <div className="mechanical-panel-set">
+            {panels.map((panel, index) => (
+              <span
+                key={index}
+                className={`mechanical-panel ${panel.className}`}
+                style={{
+                  "--x": panel.x,
+                  "--y": panel.y,
+                  "--rotate": panel.rotate,
+                  "--delay": panel.delay,
+                }}
+              />
+            ))}
+          </div>
+
+          <div className="shield-core" aria-hidden="true">
+            <span className="core-rail rail-a" />
+            <span className="core-rail rail-b" />
+            <span className="core-rail rail-c" />
+            <span className="core-rail rail-d" />
+          </div>
+
+          <svg
+            className="intro-shield"
+            viewBox="0 0 64 64"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M32 5 54 14v17c0 13-9 22-22 28C19 53 10 44 10 31V14L32 5Z"
+              fill="rgba(0, 24, 31, 0.82)"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinejoin="round"
+            />
+
+            <g stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+              <path d="M28 23h14M28 32h14M28 41h8" />
+              <path d="M21 23h1M21 32h1M21 41h1" />
+            </g>
+          </svg>
+        </div>
+
+        <div className="intro-wordmark" aria-label="LOG FUSION">
+          {word.map((letter, index) => (
+            <span
+              key={`${letter}-${index}`}
+              className={`intro-letter ${letter === " " ? "space" : ""}`}
+              style={{ "--i": index }}
+            >
+              {letter === " " ? "\u00A0" : letter}
+            </span>
+          ))}
+        </div>
+
+        <div className="intro-subtitle">UNIVERSAL LOG PRE-PROCESSING FRAMEWORK</div>
+      </div>
     </div>
   );
 }
