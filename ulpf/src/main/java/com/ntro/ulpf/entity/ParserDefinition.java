@@ -2,6 +2,8 @@ package com.ntro.ulpf.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
@@ -58,6 +60,36 @@ public class ParserDefinition {
     private boolean enabled;
 
     @Column(
+            name = "confidence",
+            nullable = true
+    )
+    private Double confidence;
+
+    @Enumerated(EnumType.STRING)
+    @Column(
+            name = "creation_mode",
+            nullable = false
+    )
+    private ParserCreationMode creationMode = ParserCreationMode.MANUAL;
+
+    @Column(
+            name = "successful_matches",
+            nullable = false
+    )
+    private long successfulMatches;
+
+    @Column(
+            name = "failed_matches",
+            nullable = false
+    )
+    private long failedMatches;
+
+    @Column(
+            name = "last_matched_at"
+    )
+    private LocalDateTime lastMatchedAt;
+
+    @Column(
             name = "created_at",
             nullable = false
     )
@@ -76,6 +108,38 @@ public class ParserDefinition {
             boolean enabled,
             LocalDateTime createdAt
     ) {
+        this(
+                id,
+                name,
+                signaturePrefix,
+                delimiter,
+                keyValueSeparator,
+                fieldMappings,
+                enabled,
+                null,
+                ParserCreationMode.MANUAL,
+                0,
+                0,
+                null,
+                createdAt
+        );
+    }
+
+    public ParserDefinition(
+            UUID id,
+            String name,
+            String signaturePrefix,
+            String delimiter,
+            String keyValueSeparator,
+            String fieldMappings,
+            boolean enabled,
+            Double confidence,
+            ParserCreationMode creationMode,
+            long successfulMatches,
+            long failedMatches,
+            LocalDateTime lastMatchedAt,
+            LocalDateTime createdAt
+    ) {
         this.id = id;
         this.name = name;
         this.signaturePrefix = signaturePrefix;
@@ -83,6 +147,11 @@ public class ParserDefinition {
         this.keyValueSeparator = keyValueSeparator;
         this.fieldMappings = fieldMappings;
         this.enabled = enabled;
+        this.confidence = confidence;
+        this.creationMode = creationMode == null ? ParserCreationMode.MANUAL : creationMode;
+        this.successfulMatches = successfulMatches;
+        this.failedMatches = failedMatches;
+        this.lastMatchedAt = lastMatchedAt;
         this.createdAt = createdAt;
     }
 
@@ -140,6 +209,46 @@ public class ParserDefinition {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public Double getConfidence() {
+        return confidence;
+    }
+
+    public void setConfidence(Double confidence) {
+        this.confidence = confidence;
+    }
+
+    public ParserCreationMode getCreationMode() {
+        return creationMode;
+    }
+
+    public void setCreationMode(ParserCreationMode creationMode) {
+        this.creationMode = creationMode;
+    }
+
+    public long getSuccessfulMatches() {
+        return successfulMatches;
+    }
+
+    public void setSuccessfulMatches(long successfulMatches) {
+        this.successfulMatches = successfulMatches;
+    }
+
+    public long getFailedMatches() {
+        return failedMatches;
+    }
+
+    public void setFailedMatches(long failedMatches) {
+        this.failedMatches = failedMatches;
+    }
+
+    public LocalDateTime getLastMatchedAt() {
+        return lastMatchedAt;
+    }
+
+    public void setLastMatchedAt(LocalDateTime lastMatchedAt) {
+        this.lastMatchedAt = lastMatchedAt;
     }
 
     public LocalDateTime getCreatedAt() {

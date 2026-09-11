@@ -127,6 +127,16 @@ public class DynamicParserService {
     public ParserDefinitionResponse createDefinition(
             CreateParserDefinitionRequest request
     ) {
+        return createDefinition(
+                request,
+                com.ntro.ulpf.entity.ParserCreationMode.MANUAL
+        );
+    }
+
+    public ParserDefinitionResponse createDefinition(
+            CreateParserDefinitionRequest request,
+            com.ntro.ulpf.entity.ParserCreationMode creationMode
+    ) {
 
         try {
 
@@ -145,6 +155,11 @@ public class DynamicParserService {
                             request.keyValueSeparator(),
                             mappingsJson,
                             request.enabled(),
+                            0.0,
+                            creationMode,
+                            0,
+                            0,
+                            null,
                             LocalDateTime.now()
                     );
 
@@ -1401,6 +1416,8 @@ public class DynamicParserService {
                                 .getFieldMappings()
                 ),
                 definition.isEnabled(),
+                definition.getConfidence(),
+                definition.getCreationMode() == null ? "MANUAL" : definition.getCreationMode().name(),
                 definition.getCreatedAt()
         );
     }

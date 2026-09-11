@@ -48,6 +48,9 @@ public class RawLogService {
     private final DynamicParserService
             dynamicParserService;
 
+    private final AutomaticNormalizationService
+            automaticNormalizationService;
+
     private final ObjectMapper objectMapper =
             new ObjectMapper()
                     .findAndRegisterModules();
@@ -58,7 +61,8 @@ public class RawLogService {
             FormatDetector formatDetector,
             ParserRegistry parserRegistry,
             NormalizationEngine normalizationEngine,
-            DynamicParserService dynamicParserService
+            DynamicParserService dynamicParserService,
+            AutomaticNormalizationService automaticNormalizationService
     ) {
 
         this.rawLogRepository =
@@ -78,6 +82,9 @@ public class RawLogService {
 
         this.dynamicParserService =
                 dynamicParserService;
+
+        this.automaticNormalizationService =
+                automaticNormalizationService;
     }
 
     /*
@@ -98,7 +105,9 @@ public class RawLogService {
                 );
 
         LocalDateTime receivedAt =
-                LocalDateTime.now();
+                request.receivedAt() != null
+                        ? request.receivedAt()
+                        : LocalDateTime.now();
 
         LogFormat detectedFormat =
                 formatDetector.detect(
@@ -178,43 +187,38 @@ public class RawLogService {
                                     request.rawContent()
                             );
 
-            /*
-             * No dynamic parser exists yet.
-             *
-             * Keep the raw evidence and send
-             * the log to the review/AI workflow.
-             */
-            if (dynamicResult.isEmpty()) {
+            if (dynamicResult.isPresent()) {
 
-                return toResponse(savedLog);
+                DynamicParseResult result =
+                        dynamicResult.get();
+
+                savedLog.setDetectedFormat(
+                        LogFormat.DYNAMIC.name()
+                );
+
+                savedLog.setProcessingStatus(
+                        "DETECTED"
+                );
+
+                savedLog =
+                        rawLogRepository.save(
+                                savedLog
+                        );
+
+                String parserUsed =
+                        "Dynamic:"
+                                + result.definition()
+                                        .getName();
+
+                return processParsedLog(
+                        savedLog,
+                        result.parsedLog(),
+                        parserUsed
+                );
             }
 
-            DynamicParseResult result =
-                    dynamicResult.get();
-
-            savedLog.setDetectedFormat(
-                    LogFormat.DYNAMIC.name()
-            );
-
-            savedLog.setProcessingStatus(
-                    "DETECTED"
-            );
-
-            savedLog =
-                    rawLogRepository.save(
-                            savedLog
-                    );
-
-            String parserUsed =
-                    "Dynamic:"
-                            + result.definition()
-                                    .getName();
-
-            return processParsedLog(
-                    savedLog,
-                    result.parsedLog(),
-                    parserUsed
-            );
+            return automaticNormalizationService
+                    .process(savedLog);
 
         } catch (Exception e) {
 

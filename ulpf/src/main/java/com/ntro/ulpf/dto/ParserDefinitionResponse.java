@@ -12,6 +12,8 @@ public record ParserDefinitionResponse(
         String keyValueSeparator,
         Map<String, String> fieldMappings,
         boolean enabled,
+        Double confidence,
+        String creationMode,
         LocalDateTime createdAt
 ) {
 }
