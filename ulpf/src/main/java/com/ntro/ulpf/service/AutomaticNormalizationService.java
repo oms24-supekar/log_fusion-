@@ -15,6 +15,8 @@ import com.ntro.ulpf.parser.ParsedLog;
 import com.ntro.ulpf.repository.NormalizedLogRepository;
 import com.ntro.ulpf.repository.ParserDefinitionRepository;
 import com.ntro.ulpf.repository.RawLogRepository;
+import com.ntro.ulpf.kafka.AiLogJob;
+import com.ntro.ulpf.kafka.AiLogJobPublisher;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -34,7 +36,7 @@ public class AutomaticNormalizationService {
     private final NormalizationEngine normalizationEngine;
     private final NormalizationConfidenceService normalizationConfidenceService;
     private final NormalizationValidationService normalizationValidationService;
-    private final AiServiceClient aiServiceClient;
+   private final AiLogJobPublisher aiLogJobPublisher;
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     public AutomaticNormalizationService(
