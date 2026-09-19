@@ -47,7 +47,7 @@ public class AutomaticNormalizationService {
             NormalizationEngine normalizationEngine,
             NormalizationConfidenceService normalizationConfidenceService,
             NormalizationValidationService normalizationValidationService,
-            AiServiceClient aiServiceClient
+                AiLogJobPublisher aiLogJobPublisher
     ) {
         this.rawLogRepository = rawLogRepository;
         this.normalizedLogRepository = normalizedLogRepository;
@@ -56,7 +56,7 @@ public class AutomaticNormalizationService {
         this.normalizationEngine = normalizationEngine;
         this.normalizationConfidenceService = normalizationConfidenceService;
         this.normalizationValidationService = normalizationValidationService;
-        this.aiServiceClient = aiServiceClient;
+        this.aiLogJobPublisher = aiLogJobPublisher;
     }
 
     public LogResponse process(RawLog rawLog) {
@@ -90,22 +90,71 @@ public class AutomaticNormalizationService {
                 analysis.validationPassed()
         );
 
-        if (normalizationConfidenceService.isAiEnabled() && overallScore < 0.95 && overallScore >= 0.70) {
-            try {
-                aiServiceClient.suggestMappings(content, fields);
-            } catch (Exception ignored) {
-                // AI is optional for the unknown path; if it fails, keep deterministic rules only.
-            }
-        }
+        
 
         if (normalizationConfidenceService.shouldAutoApprove(overallScore)) {
-            return autoApprove(rawLog, fields, overallScore, analysis);
-        }
+    return autoApprove(rawLog, fields, overallScore, analysis);
+}
 
-        rawLog.setProcessingStatus("NEEDS_REVIEW");
-        rawLogRepository.save(rawLog);
-        return toResponse(rawLog);
+/*
+ * The deterministic and dynamic paths could not safely normalize
+ * this log. Queue it for the separate AI worker through Kafka.
+ */
+return queueForAi(rawLog, overallScore);
     }
+    private LogResponse queueForAi(
+        RawLog rawLog,
+        double deterministicConfidence
+) {
+    rawLog.setProcessingStatus("AI_QUEUED");
+    rawLogRepository.save(rawLog);
+
+    AiLogJob job = new AiLogJob(
+            rawLog.getId(),
+            rawLog.getSourceName(),
+            rawLog.getSourceType(),
+            rawLog.getDetectedFormat(),
+            rawLog.getSha256Hash(),
+            rawLog.getRawContent(),
+            deterministicConfidence,
+            0,
+            rawLog.getReceivedAt(),
+            LocalDateTime.now()
+    );
+
+    try {
+        aiLogJobPublisher.publish(job)
+                .whenComplete((result, exception) -> {
+                    if (exception != null) {
+                        markAiQueueFailed(rawLog.getId(), exception);
+                    }
+                });
+    } catch (Exception exception) {
+        markAiQueueFailed(rawLog.getId(), exception);
+    }
+
+    return toResponse(rawLog);
+}
+
+private void markAiQueueFailed(
+        UUID rawLogId,
+        Throwable exception
+) {
+    rawLogRepository.findById(rawLogId)
+            .ifPresent(storedLog -> {
+                if ("AI_QUEUED".equals(storedLog.getProcessingStatus())) {
+                    storedLog.setProcessingStatus("AI_QUEUE_FAILED");
+                    rawLogRepository.save(storedLog);
+                }
+            });
+
+    System.err.println(
+            "Failed to queue raw log "
+                    + rawLogId
+                    + " for AI processing: "
+                    + exception.getMessage()
+    );
+}
 
     private LogResponse autoApprove(RawLog rawLog, Map<String, Object> fields, double confidence, StructureAnalysis analysis) {
         try {
