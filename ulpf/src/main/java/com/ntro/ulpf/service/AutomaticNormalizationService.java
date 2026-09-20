@@ -16,6 +16,8 @@ import com.ntro.ulpf.repository.NormalizedLogRepository;
 import com.ntro.ulpf.repository.ParserDefinitionRepository;
 import com.ntro.ulpf.repository.RawLogRepository;
 import org.springframework.stereotype.Service;
+import com.ntro.ulpf.kafka.AiLogJob;
+import com.ntro.ulpf.kafka.AiLogJobPublisher;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -34,7 +36,7 @@ public class AutomaticNormalizationService {
     private final NormalizationEngine normalizationEngine;
     private final NormalizationConfidenceService normalizationConfidenceService;
     private final NormalizationValidationService normalizationValidationService;
-  private final AiServiceClient aiServiceClient;
+ private final AiLogJobPublisher aiLogJobPublisher;
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     public AutomaticNormalizationService(
@@ -45,7 +47,7 @@ public class AutomaticNormalizationService {
             NormalizationEngine normalizationEngine,
             NormalizationConfidenceService normalizationConfidenceService,
             NormalizationValidationService normalizationValidationService,
-            AiServiceClient aiServiceClient
+            AiLogJobPublisher aiLogJobPublisher
     ) {
         this.rawLogRepository = rawLogRepository;
         this.normalizedLogRepository = normalizedLogRepository;
@@ -54,7 +56,7 @@ public class AutomaticNormalizationService {
         this.normalizationEngine = normalizationEngine;
         this.normalizationConfidenceService = normalizationConfidenceService;
         this.normalizationValidationService = normalizationValidationService;
-        this.aiServiceClient = aiServiceClient;
+        this.aiLogJobPublisher = aiLogJobPublisher;
     }
 
     public LogResponse process(RawLog rawLog) {
@@ -93,50 +95,10 @@ public class AutomaticNormalizationService {
         if (normalizationConfidenceService.shouldAutoApprove(overallScore)) {
             return autoApprove(rawLog, fields, overallScore, analysis);
         }
-
-        /*
-         * Deterministic normalization was not confident enough.
-         * Ask the local Ollama model to normalize the raw log.
-         */
-        if (normalizationConfidenceService.isAiEnabled()) {
-            try {
-                Map<String, Object> aiFields =
-                        aiServiceClient.normalizeLog(content);
-
-                if (aiFields != null && !aiFields.isEmpty()) {
-                    var validation =
-                            normalizationValidationService.validate(aiFields);
-
-                    if (validation
-                            != NormalizationValidationService.ValidationStatus.INVALID) {
-
-                        ParsedLog aiParsedLog =
-                                new ParsedLog(LogFormat.DYNAMIC, aiFields);
-
-                        rawLog.setProcessingStatus("AI_NORMALIZING");
-                        rawLogRepository.save(rawLog);
-
-                        return processParsedLog(
-                                rawLog,
-                                aiParsedLog,
-                                "OLLAMA:qwen2.5:3b"
-                        );
-                    }
-                }
-
-            } catch (Exception e) {
-                System.err.println(
-                        "OLLAMA NORMALIZATION FAILED for "
-                                + rawLog.getId()
-                                + ": "
-                                + e.getMessage()
-                );
-            }
-        }
-
-        /*
-         * Neither deterministic parsing nor AI produced a safe result.
-         */
+return queueForAi(
+        rawLog,
+        overallScore
+);
         rawLog.setProcessingStatus("NEEDS_REVIEW");
         rawLogRepository.save(rawLog);
         return toResponse(rawLog);
@@ -352,4 +314,41 @@ public class AutomaticNormalizationService {
             boolean validationPassed
     ) {
     }
+private LogResponse queueForAi(
+        RawLog rawLog,
+        double deterministicConfidence
+) {
+
+    rawLog.setProcessingStatus("AI_QUEUED");
+    rawLogRepository.save(rawLog);
+
+    AiLogJob job = new AiLogJob(
+            rawLog.getId(),
+            rawLog.getSourceName(),
+            rawLog.getSourceType(),
+            rawLog.getDetectedFormat(),
+            rawLog.getSha256Hash(),
+            rawLog.getRawContent(),
+            deterministicConfidence,
+            0,
+            rawLog.getReceivedAt(),
+            LocalDateTime.now()
+    );
+
+    try {
+        aiLogJobPublisher.publish(job);
+    } catch (Exception e) {
+        rawLog.setProcessingStatus("AI_QUEUE_FAILED");
+        rawLogRepository.save(rawLog);
+
+        System.err.println(
+                "Kafka publish failed for "
+                        + rawLog.getId()
+                        + ": "
+                        + e.getMessage()
+        );
+    }
+
+    return toResponse(rawLog);
+}
 }

@@ -87,8 +87,8 @@ public class NormalizationValidationService {
         }
 
         if (invalidChecks > 0) {
-            return ValidationStatus.INVALID;
-        }
+    return ValidationStatus.PARTIAL;
+}
 
         if (partialChecks > 0 || fields.size() < 3) {
             return ValidationStatus.PARTIAL;
