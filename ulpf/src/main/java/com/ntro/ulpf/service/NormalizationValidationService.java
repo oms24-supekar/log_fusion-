@@ -61,6 +61,16 @@ public class NormalizationValidationService {
                 invalidChecks++;
             }
         }
+        if (hasField(fields, "source_port")) {
+
+    Object portValue =
+            fields.get("source_port");
+
+    if (!isValidPort(portValue)) {
+
+        invalidChecks++;
+    }
+}
 
         if (hasField(fields, "severity")) {
             String severity = getString(fields, "severity");

@@ -15,8 +15,6 @@ import com.ntro.ulpf.parser.ParsedLog;
 import com.ntro.ulpf.repository.NormalizedLogRepository;
 import com.ntro.ulpf.repository.ParserDefinitionRepository;
 import com.ntro.ulpf.repository.RawLogRepository;
-import com.ntro.ulpf.kafka.AiLogJob;
-import com.ntro.ulpf.kafka.AiLogJobPublisher;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -47,7 +45,7 @@ public class AutomaticNormalizationService {
             NormalizationEngine normalizationEngine,
             NormalizationConfidenceService normalizationConfidenceService,
             NormalizationValidationService normalizationValidationService,
-                AiLogJobPublisher aiLogJobPublisher
+            AiServiceClient aiServiceClient
     ) {
         this.rawLogRepository = rawLogRepository;
         this.normalizedLogRepository = normalizedLogRepository;
@@ -56,7 +54,7 @@ public class AutomaticNormalizationService {
         this.normalizationEngine = normalizationEngine;
         this.normalizationConfidenceService = normalizationConfidenceService;
         this.normalizationValidationService = normalizationValidationService;
-        this.aiLogJobPublisher = aiLogJobPublisher;
+        this.aiServiceClient = aiServiceClient;
     }
 
     public LogResponse process(RawLog rawLog) {
@@ -93,68 +91,56 @@ public class AutomaticNormalizationService {
         
 
         if (normalizationConfidenceService.shouldAutoApprove(overallScore)) {
-    return autoApprove(rawLog, fields, overallScore, analysis);
-}
+            return autoApprove(rawLog, fields, overallScore, analysis);
+        }
 
-/*
- * The deterministic and dynamic paths could not safely normalize
- * this log. Queue it for the separate AI worker through Kafka.
- */
-return queueForAi(rawLog, overallScore);
-    }
-    private LogResponse queueForAi(
-        RawLog rawLog,
-        double deterministicConfidence
-) {
-    rawLog.setProcessingStatus("AI_QUEUED");
-    rawLogRepository.save(rawLog);
+        /*
+         * Deterministic normalization was not confident enough.
+         * Ask the local Ollama model to normalize the raw log.
+         */
+        if (normalizationConfidenceService.isAiEnabled()) {
+            try {
+                Map<String, Object> aiFields =
+                        aiServiceClient.normalizeLog(content);
 
-    AiLogJob job = new AiLogJob(
-            rawLog.getId(),
-            rawLog.getSourceName(),
-            rawLog.getSourceType(),
-            rawLog.getDetectedFormat(),
-            rawLog.getSha256Hash(),
-            rawLog.getRawContent(),
-            deterministicConfidence,
-            0,
-            rawLog.getReceivedAt(),
-            LocalDateTime.now()
-    );
+                if (aiFields != null && !aiFields.isEmpty()) {
+                    var validation =
+                            normalizationValidationService.validate(aiFields);
 
-    try {
-        aiLogJobPublisher.publish(job)
-                .whenComplete((result, exception) -> {
-                    if (exception != null) {
-                        markAiQueueFailed(rawLog.getId(), exception);
+                    if (validation
+                            != NormalizationValidationService.ValidationStatus.INVALID) {
+
+                        ParsedLog aiParsedLog =
+                                new ParsedLog(LogFormat.DYNAMIC, aiFields);
+
+                        rawLog.setProcessingStatus("AI_NORMALIZING");
+                        rawLogRepository.save(rawLog);
+
+                        return processParsedLog(
+                                rawLog,
+                                aiParsedLog,
+                                "OLLAMA:qwen2.5:3b"
+                        );
                     }
-                });
-    } catch (Exception exception) {
-        markAiQueueFailed(rawLog.getId(), exception);
-    }
-
-    return toResponse(rawLog);
-}
-
-private void markAiQueueFailed(
-        UUID rawLogId,
-        Throwable exception
-) {
-    rawLogRepository.findById(rawLogId)
-            .ifPresent(storedLog -> {
-                if ("AI_QUEUED".equals(storedLog.getProcessingStatus())) {
-                    storedLog.setProcessingStatus("AI_QUEUE_FAILED");
-                    rawLogRepository.save(storedLog);
                 }
-            });
 
-    System.err.println(
-            "Failed to queue raw log "
-                    + rawLogId
-                    + " for AI processing: "
-                    + exception.getMessage()
-    );
-}
+            } catch (Exception e) {
+                System.err.println(
+                        "OLLAMA NORMALIZATION FAILED for "
+                                + rawLog.getId()
+                                + ": "
+                                + e.getMessage()
+                );
+            }
+        }
+
+        /*
+         * Neither deterministic parsing nor AI produced a safe result.
+         */
+        rawLog.setProcessingStatus("NEEDS_REVIEW");
+        rawLogRepository.save(rawLog);
+        return toResponse(rawLog);
+    }
 
     private LogResponse autoApprove(RawLog rawLog, Map<String, Object> fields, double confidence, StructureAnalysis analysis) {
         try {
