@@ -34,7 +34,7 @@ public class AutomaticNormalizationService {
     private final NormalizationEngine normalizationEngine;
     private final NormalizationConfidenceService normalizationConfidenceService;
     private final NormalizationValidationService normalizationValidationService;
-   private final AiLogJobPublisher aiLogJobPublisher;
+  private final AiServiceClient aiServiceClient;
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     public AutomaticNormalizationService(
