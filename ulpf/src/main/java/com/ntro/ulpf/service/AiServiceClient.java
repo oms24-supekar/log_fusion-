@@ -1,5 +1,6 @@
 package com.ntro.ulpf.service;
 
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,7 +15,10 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import com.ntro.ulpf.dto.AiMappingSuggestion;
 
+import java.util.ArrayList;
+import java.util.List;
 @Service
 public class AiServiceClient {
 
@@ -297,4 +301,46 @@ public class AiServiceClient {
             );
         }
     }
+public List<AiMappingSuggestion> suggestMappings(
+        String rawLog,
+        Map<String, Object> extractedFields
+) {
+
+    Map<String, Object> normalized =
+            normalizeLog(rawLog);
+
+    List<AiMappingSuggestion> suggestions =
+            new ArrayList<>();
+
+    for (Map.Entry<String, Object> entry
+            : normalized.entrySet()) {
+
+        String universalField =
+                entry.getKey();
+
+        Object value =
+                entry.getValue();
+
+        if (value == null) {
+            continue;
+        }
+
+        String sourceField =
+                extractedFields.containsKey(universalField)
+                        ? universalField
+                        : "raw_log";
+
+        suggestions.add(
+                new AiMappingSuggestion(
+                        sourceField,
+                        String.valueOf(value),
+                        universalField,
+                        0.85,
+                        "OLLAMA"
+                )
+        );
+    }
+
+    return suggestions;
+}
 }
