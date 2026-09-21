@@ -406,44 +406,44 @@ public class LogStructureFingerprintService {
                         raw
                 );
 
-        if (first.startsWith(
-                "CEF:"
-        )) {
-
+        if (first.startsWith("CEF:")) {
             return "CEF:";
         }
 
-        if (first.startsWith(
-                "LEEF:"
-        )) {
-
+        if (first.startsWith("LEEF:")) {
             return "LEEF:";
         }
 
         if (first.startsWith("{")) {
-
             return "JSON";
         }
 
         /*
-         * Capture stable prefix before the first
-         * obvious delimiter.
+         * Capture only the stable structural prefix
+         * before the first major delimiter.
          *
-         * Example:
+         * Examples:
          *
-         * RAVEN#91 node=...
+         * RAVEN#1~node1~user1...
+         * -> RAVEN#
          *
-         * → RAVEN#
+         * MYSTERY_EVT@@host=...
+         * -> MYSTERY_EVT
+         *
+         * NEBULA::user=...
+         * -> NEBULA
          */
-
         String token =
                 first.split(
-                        "\\s+",
+                        "(?:@@|::|~|\\||\\s)",
                         2
                 )[0];
 
         /*
          * Remove trailing variable numbers.
+         *
+         * RAVEN#1 -> RAVEN#
+         * DEVICE42 -> DEVICE
          */
         token =
                 token.replaceAll(
@@ -451,9 +451,6 @@ public class LogStructureFingerprintService {
                         ""
                 );
 
-        /*
-         * Keep signature reasonably small.
-         */
         if (token.length() > 32) {
 
             token =
@@ -485,8 +482,16 @@ public class LogStructureFingerprintService {
             return "@@";
         }
 
+        if (raw.contains("::")) {
+            return "::";
+        }
+
         if (raw.contains("||")) {
             return "||";
+        }
+
+        if (raw.contains("~")) {
+            return "~";
         }
 
         if (raw.contains("\t")) {
