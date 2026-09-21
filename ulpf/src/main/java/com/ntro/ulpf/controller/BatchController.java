@@ -17,8 +17,7 @@ public class BatchController {
     public BatchController(
             BatchIngestionService batchIngestionService
     ) {
-        this.batchIngestionService =
-                batchIngestionService;
+        this.batchIngestionService = batchIngestionService;
     }
 
     @PostMapping(
@@ -26,8 +25,7 @@ public class BatchController {
             consumes = "multipart/form-data"
     )
     public ResponseEntity<BatchAcceptedResponse> upload(
-            @RequestPart("file")
-            MultipartFile file,
+            @RequestPart("file") MultipartFile file,
 
             @RequestParam(
                     value = "sourceName",

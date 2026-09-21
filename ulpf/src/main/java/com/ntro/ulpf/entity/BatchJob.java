@@ -99,7 +99,17 @@ public class BatchJob {
         name = "storage_path",
         nullable = false
 )
+
 private String storagePath;
+public String getStoragePath() {
+    return storagePath;
+}
+
+public void setStoragePath(
+        String storagePath
+) {
+    this.storagePath = storagePath;
+}
 
     public BatchJob() {
     }

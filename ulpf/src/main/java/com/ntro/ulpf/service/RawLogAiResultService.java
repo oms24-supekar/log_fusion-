@@ -23,6 +23,7 @@ public class RawLogAiResultService {
     private final RawLogRepository rawLogRepository;
     private final NormalizationEngine normalizationEngine;
     private final AiSuspicionService aiSuspicionService;
+    private final ParserLearningService parserLearningService;
 
     private final ObjectMapper objectMapper =
             new ObjectMapper()
@@ -32,12 +33,23 @@ public class RawLogAiResultService {
             NormalizedLogRepository normalizedLogRepository,
             RawLogRepository rawLogRepository,
             NormalizationEngine normalizationEngine,
-            AiSuspicionService aiSuspicionService
+            AiSuspicionService aiSuspicionService,
+            ParserLearningService parserLearningService
     ) {
-        this.normalizedLogRepository = normalizedLogRepository;
-        this.rawLogRepository = rawLogRepository;
-        this.normalizationEngine = normalizationEngine;
-        this.aiSuspicionService = aiSuspicionService;
+        this.normalizedLogRepository =
+                normalizedLogRepository;
+
+        this.rawLogRepository =
+                rawLogRepository;
+
+        this.normalizationEngine =
+                normalizationEngine;
+
+        this.aiSuspicionService =
+                aiSuspicionService;
+
+        this.parserLearningService =
+                parserLearningService;
     }
 
     public void saveAiResult(
@@ -47,6 +59,11 @@ public class RawLogAiResultService {
             String parserUsed
     ) throws Exception {
 
+        /*
+         * =====================================================
+         * NORMALIZE AI OUTPUT
+         * =====================================================
+         */
         UniversalEvent universalEvent =
                 normalizationEngine.normalize(
                         rawLog,
@@ -54,12 +71,27 @@ public class RawLogAiResultService {
                         parserUsed
                 );
 
+        /*
+         * =====================================================
+         * FIELD-LEVEL AI REVIEW
+         * =====================================================
+         */
         AiReviewMetadata aiReview =
                 aiSuspicionService.review(
                         rawLog.getRawContent(),
                         parsedLog.fields()
                 );
 
+        /*
+         * =====================================================
+         * STORED RESULT
+         * =====================================================
+         *
+         * {
+         *   normalized: {...},
+         *   aiReview: {...}
+         * }
+         */
         Map<String, Object> storedResult =
                 new LinkedHashMap<>();
 
@@ -78,6 +110,11 @@ public class RawLogAiResultService {
                         storedResult
                 );
 
+        /*
+         * =====================================================
+         * SAVE NORMALIZED LOG
+         * =====================================================
+         */
         NormalizedLog normalizedLog =
                 new NormalizedLog(
                         UUID.randomUUID(),
@@ -94,6 +131,28 @@ public class RawLogAiResultService {
                 normalizedLog
         );
 
+        /*
+         * =====================================================
+         * LEARNING LAYER
+         * =====================================================
+         *
+         * Every successful AI normalization now feeds
+         * the parser learning system.
+         *
+         * The same structural family will accumulate
+         * examples over time.
+         */
+        parserLearningService
+                .learnFromSuccessfulAiNormalization(
+                        rawLog.getRawContent(),
+                        parsedLog
+                );
+
+        /*
+         * =====================================================
+         * FINAL RAW LOG STATUS
+         * =====================================================
+         */
         rawLog.setProcessingStatus(
                 "NORMALIZED"
         );

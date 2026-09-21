@@ -1,5 +1,13 @@
 package com.ntro.ulpf.service;
 
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ntro.ulpf.detection.LogFormat;
 import com.ntro.ulpf.dto.LogResponse;
@@ -16,14 +24,6 @@ import com.ntro.ulpf.parser.ParsedLog;
 import com.ntro.ulpf.repository.NormalizedLogRepository;
 import com.ntro.ulpf.repository.ParserDefinitionRepository;
 import com.ntro.ulpf.repository.RawLogRepository;
-
-import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class AutomaticNormalizationService {
@@ -819,4 +819,19 @@ public class AutomaticNormalizationService {
             boolean validationPassed
     ) {
     }
+    public LogResponse queueDirectlyForAi(
+        RawLog rawLog
+) {
+
+    if (rawLog == null) {
+        throw new IllegalArgumentException(
+                "Raw log cannot be null"
+        );
+    }
+
+    return queueForAi(
+            rawLog,
+            0.0
+    );
+}
 }

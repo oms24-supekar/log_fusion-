@@ -19,19 +19,22 @@ import java.util.UUID;
 public class BatchIngestionService {
 
     private final BatchJobRepository batchJobRepository;
-
     private final Path storageDirectory;
+    private final BatchProcessingService
+        batchProcessingService;
 
     public BatchIngestionService(
             BatchJobRepository batchJobRepository,
-            @Value(
-                "${logfusion.batch.storage-dir:./data/batches}"
-            )
+            BatchProcessingService batchProcessingService,
+            @Value("${logfusion.batch.storage-dir:./data/batches}")
             String storageDirectory
     ) {
 
         this.batchJobRepository =
                 batchJobRepository;
+
+        this.batchProcessingService =
+                batchProcessingService;
 
         this.storageDirectory =
                 Path.of(storageDirectory)
@@ -77,14 +80,9 @@ public class BatchIngestionService {
 
             Path targetPath =
                     storageDirectory
-                            .resolve(
-                                    storedFileName
-                            )
+                            .resolve(storedFileName)
                             .normalize();
 
-            /*
-             * Prevent path traversal.
-             */
             if (!targetPath.startsWith(
                     storageDirectory
             )) {
@@ -94,16 +92,6 @@ public class BatchIngestionService {
                 );
             }
 
-            /*
-             * STREAM upload to disk.
-             *
-             * We do NOT use:
-             * readAllBytes()
-             * Files.readAllLines()
-             *
-             * Therefore a 100k+ line file does not
-             * have to live entirely in JVM memory.
-             */
             try (
                     InputStream inputStream =
                             file.getInputStream()
@@ -112,8 +100,7 @@ public class BatchIngestionService {
                 Files.copy(
                         inputStream,
                         targetPath,
-                        StandardCopyOption
-                                .REPLACE_EXISTING
+                        StandardCopyOption.REPLACE_EXISTING
                 );
             }
 
@@ -129,12 +116,6 @@ public class BatchIngestionService {
                                     sourceType
                             ),
                             "ACCEPTED",
-
-                            /*
-                             * Counts are populated
-                             * by the batch processor
-                             * in Chunk 3.
-                             */
                             0,
                             0,
                             0,
@@ -142,7 +123,6 @@ public class BatchIngestionService {
                             0,
                             0,
                             0,
-
                             now,
                             null,
                             now
@@ -151,6 +131,9 @@ public class BatchIngestionService {
             batchJobRepository.save(
                     batchJob
             );
+            batchProcessingService.process(
+        batchId
+);
 
             return new BatchAcceptedResponse(
                     batchId,
@@ -190,11 +173,9 @@ public class BatchIngestionService {
                         "_"
                 );
 
-        if (safeName.isBlank()) {
-            return "batch.log";
-        }
-
-        return safeName;
+        return safeName.isBlank()
+                ? "batch.log"
+                : safeName;
     }
 
     private String normalizeSourceName(
