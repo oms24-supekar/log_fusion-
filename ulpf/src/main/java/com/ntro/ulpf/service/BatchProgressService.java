@@ -1,12 +1,11 @@
 package com.ntro.ulpf.service;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
+import com.ntro.ulpf.repository.BatchJobRepository;
 
 import org.springframework.stereotype.Service;
 
-import com.ntro.ulpf.entity.BatchJob;
-import com.ntro.ulpf.repository.BatchJobRepository;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 public class BatchProgressService {
@@ -20,140 +19,112 @@ public class BatchProgressService {
                 batchJobRepository;
     }
 
+    /*
+     * IMPORTANT:
+     *
+     * Call this BEFORE publishing the Kafka job.
+     * That prevents the consumer from starting before
+     * aiQueued has been incremented.
+     */
     public void markAiQueued(
             UUID batchId
     ) {
-
         if (batchId == null) {
             return;
         }
 
-        batchJobRepository
-                .incrementAiQueued(
-                        batchId,
-                        LocalDateTime.now()
-                );
+        batchJobRepository.incrementAiQueued(
+                batchId,
+                LocalDateTime.now()
+        );
     }
 
     public void markAiStarted(
             UUID batchId
     ) {
-
         if (batchId == null) {
             return;
         }
 
-        batchJobRepository
-                .markAiStarted(
-                        batchId,
-                        LocalDateTime.now()
-                );
+        batchJobRepository.markAiStarted(
+                batchId,
+                LocalDateTime.now()
+        );
     }
 
     public void markAiCompleted(
             UUID batchId
     ) {
-
         if (batchId == null) {
             return;
         }
 
-        batchJobRepository
-                .markAiCompleted(
-                        batchId,
-                        LocalDateTime.now()
-                );
+        LocalDateTime now =
+                LocalDateTime.now();
 
-        finalizeBatch(
-                batchId
+        batchJobRepository.markAiCompleted(
+                batchId,
+                now
+        );
+
+        batchJobRepository.refreshStatus(
+                batchId,
+                now
         );
     }
 
     public void markAiFailed(
             UUID batchId
     ) {
-
         if (batchId == null) {
             return;
         }
 
-        batchJobRepository
-                .markAiFailed(
-                        batchId,
-                        LocalDateTime.now()
-                );
+        LocalDateTime now =
+                LocalDateTime.now();
 
-        finalizeBatch(
-                batchId
+        batchJobRepository.markAiFailed(
+                batchId,
+                now
+        );
+
+        batchJobRepository.refreshStatus(
+                batchId,
+                now
         );
     }
 
-    public void finalizeBatch(
+    public void markAiQueueFailed(
             UUID batchId
     ) {
-
-        BatchJob batch =
-                batchJobRepository
-                        .findById(
-                                batchId
-                        )
-                        .orElse(null);
-
-        if (batch == null) {
+        if (batchId == null) {
             return;
         }
 
-        boolean aiFinished =
-                batch.getAiQueued() == 0
-                        &&
-                batch.getAiProcessing() == 0;
+        LocalDateTime now =
+                LocalDateTime.now();
 
-        long handled =
-                batch.getNormalizedLogs()
-                        +
-                batch.getFailedLogs();
-
-        boolean allHandled =
-                batch.getTotalLogs() > 0
-                        &&
-                handled >= batch.getTotalLogs();
-
-        if (
-                aiFinished
-                        &&
-                allHandled
-        ) {
-
-            if (batch.getFailedLogs() > 0) {
-
-                batch.setStatus(
-                        "COMPLETED_WITH_ERRORS"
-                );
-
-            } else {
-
-                batch.setStatus(
-                        "COMPLETED"
-                );
-            }
-
-            batch.setCompletedAt(
-                    LocalDateTime.now()
-            );
-
-        } else {
-
-            batch.setStatus(
-                    "AI_DRAINING"
-            );
-        }
-
-        batch.setLastUpdatedAt(
-                LocalDateTime.now()
+        batchJobRepository.markAiQueueFailed(
+                batchId,
+                now
         );
 
-        batchJobRepository.save(
-                batch
+        batchJobRepository.refreshStatus(
+                batchId,
+                now
+        );
+    }
+
+    public void refreshBatchStatus(
+            UUID batchId
+    ) {
+        if (batchId == null) {
+            return;
+        }
+
+        batchJobRepository.refreshStatus(
+                batchId,
+                LocalDateTime.now()
         );
     }
 }

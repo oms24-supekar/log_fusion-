@@ -1,5 +1,13 @@
 package com.ntro.ulpf.service;
 
+import com.ntro.ulpf.dto.LogRequest;
+import com.ntro.ulpf.dto.LogResponse;
+import com.ntro.ulpf.entity.BatchJob;
+import com.ntro.ulpf.repository.BatchJobRepository;
+
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+
 import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -8,14 +16,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Service;
-
-import com.ntro.ulpf.dto.LogRequest;
-import com.ntro.ulpf.dto.LogResponse;
-import com.ntro.ulpf.entity.BatchJob;
-import com.ntro.ulpf.repository.BatchJobRepository;
 
 @Service
 public class BatchProcessingService {
@@ -46,6 +46,11 @@ public class BatchProcessingService {
             UUID batchId
     ) {
 
+        /*
+         * Load static batch metadata once.
+         *
+         * We DO NOT use this entity to update counters.
+         */
         BatchJob batch =
                 batchJobRepository
                         .findById(batchId)
@@ -58,16 +63,9 @@ public class BatchProcessingService {
 
         try {
 
-            batch.setStatus(
-                    "INGESTING"
-            );
-
-            batch.setLastUpdatedAt(
+            batchJobRepository.markIngestionStarted(
+                    batchId,
                     LocalDateTime.now()
-            );
-
-            batchJobRepository.save(
-                    batch
             );
 
             Path filePath =
@@ -75,10 +73,6 @@ public class BatchProcessingService {
                             batch.getStoragePath()
                     );
 
-            /*
-             * Stream the file instead of loading
-             * the whole batch into memory.
-             */
             try (
                     BufferedReader reader =
                             Files.newBufferedReader(
@@ -106,15 +100,15 @@ public class BatchProcessingService {
                         continue;
                     }
 
-                    chunk.add(
-                            trimmed
-                    );
+                    chunk.add(trimmed);
 
                     if (chunk.size()
                             >= CHUNK_SIZE) {
 
                         processChunk(
                                 batchId,
+                                batch.getSourceName(),
+                                batch.getSourceType(),
                                 chunk
                         );
 
@@ -126,109 +120,28 @@ public class BatchProcessingService {
 
                     processChunk(
                             batchId,
+                            batch.getSourceName(),
+                            batch.getSourceType(),
                             chunk
                     );
                 }
             }
 
             /*
-             * IMPORTANT:
-             *
-             * Reload from PostgreSQL.
-             *
-             * Kafka consumers may already have updated
-             * AI counters while this batch was ingesting.
-             *
-             * Never save the old/stale BatchJob object here.
+             * Database decides PROCESSING / AI_DRAINING /
+             * COMPLETED / COMPLETED_WITH_ERRORS.
              */
-            BatchJob latestBatch =
-                    batchJobRepository
-                            .findById(batchId)
-                            .orElseThrow(() ->
-                                    new IllegalStateException(
-                                            "Batch disappeared: "
-                                                    + batchId
-                                    )
-                            );
-
-            boolean aiRemaining =
-                    latestBatch.getAiQueued() > 0
-                            ||
-                    latestBatch.getAiProcessing() > 0;
-
-            long handled =
-                    latestBatch.getNormalizedLogs()
-                            +
-                    latestBatch.getFailedLogs();
-
-            boolean allHandled =
-                    latestBatch.getTotalLogs() > 0
-                            &&
-                    handled >=
-                            latestBatch.getTotalLogs();
-
-            if (aiRemaining) {
-
-                latestBatch.setStatus(
-                        "AI_DRAINING"
-                );
-
-            } else if (allHandled) {
-
-                if (latestBatch.getFailedLogs() > 0) {
-
-                    latestBatch.setStatus(
-                            "COMPLETED_WITH_ERRORS"
+            batchProgressService
+                    .refreshBatchStatus(
+                            batchId
                     );
-
-                } else {
-
-                    latestBatch.setStatus(
-                            "COMPLETED"
-                    );
-                }
-
-                latestBatch.setCompletedAt(
-                        LocalDateTime.now()
-                );
-
-            } else {
-
-                latestBatch.setStatus(
-                        "PROCESSING"
-                );
-            }
-
-            latestBatch.setLastUpdatedAt(
-                    LocalDateTime.now()
-            );
-
-            batchJobRepository.save(
-                    latestBatch
-            );
 
         } catch (Exception e) {
 
-            /*
-             * Reload the newest row before marking failure.
-             * Avoid overwriting counters modified by Kafka.
-             */
-            batchJobRepository
-                    .findById(batchId)
-                    .ifPresent(latestBatch -> {
-
-                        latestBatch.setStatus(
-                                "FAILED"
-                        );
-
-                        latestBatch.setLastUpdatedAt(
-                                LocalDateTime.now()
-                        );
-
-                        batchJobRepository.save(
-                                latestBatch
-                        );
-                    });
+            batchJobRepository.markBatchFailed(
+                    batchId,
+                    LocalDateTime.now()
+            );
 
             System.err.println(
                     "Batch processing failed for "
@@ -241,30 +154,15 @@ public class BatchProcessingService {
 
     private void processChunk(
             UUID batchId,
+            String sourceName,
+            String sourceType,
             List<String> chunk
     ) {
 
-        /*
-         * These counters belong only to the synchronous
-         * deterministic ingestion side.
-         *
-         * AI counters are updated atomically by
-         * BatchProgressService.
-         */
         long accepted = 0;
         long deterministic = 0;
         long normalized = 0;
         long failed = 0;
-
-        BatchJob batch =
-                batchJobRepository
-                        .findById(batchId)
-                        .orElseThrow(() ->
-                                new IllegalStateException(
-                                        "Batch not found: "
-                                                + batchId
-                                )
-                        );
 
         for (String rawContent
                 : chunk) {
@@ -274,16 +172,15 @@ public class BatchProcessingService {
                 LogRequest request =
                         new LogRequest(
                                 rawContent,
-                                batch.getSourceName(),
-                                batch.getSourceType(),
+                                sourceName,
+                                sourceType,
                                 batchId
                         );
 
                 LogResponse response =
-                        rawLogService
-                                .saveRawLog(
-                                        request
-                                );
+                        rawLogService.saveRawLog(
+                                request
+                        );
 
                 accepted++;
 
@@ -291,58 +188,19 @@ public class BatchProcessingService {
                         response.processingStatus();
 
                 /*
-                 * Deterministic normalization completed
-                 * synchronously.
+                 * Only synchronous deterministic work is counted here.
+                 *
+                 * AI queue counters are owned by the AI queueing path
+                 * BEFORE Kafka publish. Never increment aiQueued here.
                  */
-                if ("NORMALIZED".equals(
-                        status
-                )) {
+                if ("NORMALIZED".equals(status)) {
 
                     deterministic++;
-
                     normalized++;
-                }
 
-                /*
-                 * Unknown format was handed to Kafka.
-                 *
-                 * Do NOT modify the BatchJob Java object.
-                 *
-                 * Update PostgreSQL atomically.
-                 */
-                else if ("AI_QUEUED".equals(
-                        status
-                )) {
-
-                    batchProgressService
-                            .markAiQueued(
-                                    batchId
-                            );
-                }
-
-                /*
-                 * Usually unlikely to be returned directly
-                 * because AI processing is asynchronous,
-                 * but handle it safely if it occurs.
-                 */
-                else if ("AI_NORMALIZING".equals(
-                        status
-                )) {
-
-                    /*
-                     * The AI consumer has already started
-                     * processing this job.
-                     *
-                     * Do not increment aiQueued here.
-                     */
-                }
-
-                else if (
+                } else if (
                         status != null
-                                &&
-                        status.contains(
-                                "FAILED"
-                        )
+                        && status.contains("FAILED")
                 ) {
 
                     failed++;
@@ -360,79 +218,28 @@ public class BatchProcessingService {
         }
 
         /*
-         * Reload the latest batch state because
-         * Kafka workers may have modified AI counters
-         * during this chunk.
+         * One atomic counter UPDATE per 500-log chunk.
          */
-        BatchJob latestBatch =
-                batchJobRepository
-                        .findById(batchId)
-                        .orElseThrow(() ->
-                                new IllegalStateException(
-                                        "Batch not found: "
-                                                + batchId
-                                )
-                        );
-
-        latestBatch.setTotalLogs(
-                latestBatch.getTotalLogs()
-                        + chunk.size()
-        );
-
-        latestBatch.setAcceptedLogs(
-                latestBatch.getAcceptedLogs()
-                        + accepted
-        );
-
-        latestBatch.setDeterministicProcessed(
-                latestBatch.getDeterministicProcessed()
-                        + deterministic
-        );
-
-        latestBatch.setNormalizedLogs(
-                latestBatch.getNormalizedLogs()
-                        + normalized
-        );
-
-        latestBatch.setFailedLogs(
-                latestBatch.getFailedLogs()
-                        + failed
-        );
-
-        /*
-         * Do not blindly set PROCESSING if Kafka
-         * has already moved the batch to AI_DRAINING.
-         */
-        if (
-                latestBatch.getAiQueued() > 0
-                        ||
-                latestBatch.getAiProcessing() > 0
-        ) {
-
-            latestBatch.setStatus(
-                    "AI_DRAINING"
-            );
-
-        } else {
-
-            latestBatch.setStatus(
-                    "PROCESSING"
-            );
-        }
-
-        latestBatch.setLastUpdatedAt(
+        batchJobRepository.addChunkCounters(
+                batchId,
+                chunk.size(),
+                accepted,
+                deterministic,
+                normalized,
+                failed,
                 LocalDateTime.now()
         );
 
-        batchJobRepository.save(
-                latestBatch
-        );
+        batchProgressService
+                .refreshBatchStatus(
+                        batchId
+                );
 
         System.out.println(
                 "Batch "
                         + batchId
-                        + " processed "
-                        + latestBatch.getTotalLogs()
+                        + " processed another "
+                        + chunk.size()
                         + " logs"
         );
     }

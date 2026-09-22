@@ -61,6 +61,21 @@ public class LogStructureFingerprintService {
             );
 
     /*
+     * Normalize identifiers with changing numeric suffixes.
+     *
+     * node1  -> node<num>
+     * node42 -> node<num>
+     * user7  -> user<num>
+     *
+     * This allows structurally identical logs to share
+     * one fingerprint even when numbered identifiers vary.
+     */
+    private static final Pattern ALPHANUMERIC_SUFFIX_PATTERN =
+            Pattern.compile(
+                    "\\b([A-Za-z_-]+)\\d+\\b"
+            );
+
+    /*
      * Generic key=value token detector.
      *
      * Example:
@@ -250,7 +265,28 @@ public class LogStructureFingerprintService {
                 buffer.toString();
 
         /*
+         * Normalize changing numeric suffixes attached to words.
+         *
+         * Examples:
+         *
+         * node1  -> node<num>
+         * node2  -> node<num>
+         * user15 -> user<num>
+         *
+         * Without this step each of those values would create
+         * a different structural fingerprint.
+         */
+        value =
+                ALPHANUMERIC_SUFFIX_PATTERN
+                        .matcher(value)
+                        .replaceAll("$1<num>");
+
+        /*
          * Remaining standalone numbers.
+         *
+         * Example:
+         *
+         * RAVEN#1 -> RAVEN#<num>
          */
         value =
                 NUMBER_PATTERN
