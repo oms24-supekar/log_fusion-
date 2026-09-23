@@ -1,55 +1,48 @@
 package com.ntro.ulpf.security;
 
 import com.ntro.ulpf.entity.UserAccount;
-import com.ntro.ulpf.repository.UserAccountRepository;
-import io.jsonwebtoken.JwtException;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.util.List;
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.Date;
 
-@Component
-public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    private final JwtService jwtService;
-    private final UserAccountRepository userRepository;
+@Service
+public class JwtService {
+    private final SecretKey signingKey;
+    private final long expirationSeconds;
 
-    public JwtAuthenticationFilter(JwtService jwtService, UserAccountRepository userRepository) {
-        this.jwtService=jwtService; this.userRepository=userRepository;
+    public JwtService(@Value("${app.jwt.secret}") String secret,
+                      @Value("${app.jwt.expiration-seconds:3600}") long expirationSeconds) {
+        if (secret == null || secret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException("JWT secret must be at least 32 bytes long.");
+        }
+        this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        this.expirationSeconds = expirationSeconds;
     }
 
-    @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
-            throws ServletException, IOException {
-        String header=request.getHeader("Authorization");
-        if (header==null || !header.startsWith("Bearer ")) {
-            chain.doFilter(request,response);
-            return;
-        }
-
-        try {
-            String email=jwtService.extractEmail(header.substring(7));
-            if (email!=null && SecurityContextHolder.getContext().getAuthentication()==null) {
-                UserAccount user=userRepository.findByEmailIgnoreCase(email).orElse(null);
-                if (user!=null && user.isEnabled()) {
-                    var auth=new UsernamePasswordAuthenticationToken(
-                            user.getEmail(), null,
-                            List.of(new SimpleGrantedAuthority("ROLE_"+user.getRole().toUpperCase()))
-                    );
-                    SecurityContextHolder.getContext().setAuthentication(auth);
-                }
-            }
-        } catch (JwtException | IllegalArgumentException ignored) {
-            SecurityContextHolder.clearContext();
-        }
-
-        chain.doFilter(request,response);
+    public String generateToken(UserAccount user) {
+        Instant now = Instant.now();
+        return Jwts.builder()
+                .subject(user.getEmail())
+                .claim("uid", user.getId().toString())
+                .claim("name", user.getName())
+                .claim("role", user.getRole())
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plusSeconds(expirationSeconds)))
+                .signWith(signingKey)
+                .compact();
     }
+
+    public Claims parseClaims(String token) {
+        return Jwts.parser().verifyWith(signingKey).build().parseSignedClaims(token).getPayload();
+    }
+
+    public String extractEmail(String token) { return parseClaims(token).getSubject(); }
+    public long getExpirationSeconds() { return expirationSeconds; }
 }

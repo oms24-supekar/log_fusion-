@@ -1,3 +1,5 @@
 package com.ntro.ulpf.auth;
 
-public record LoginResponse(String accessToken, String tokenType, long expiresIn, AuthUserResponse user) {}
+import java.util.UUID;
+
+public record AuthUserResponse(UUID id, String name, String email, String role) {}

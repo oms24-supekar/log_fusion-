@@ -1,48 +1,55 @@
 package com.ntro.ulpf.security;
 
-import com.ntro.ulpf.entity.UserAccount;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.*;
 
-import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.util.Date;
+import java.util.List;
 
-@Service
-public class JwtService {
-    private final SecretKey signingKey;
-    private final long expirationSeconds;
+@Configuration
+public class SecurityConfig {
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    public JwtService(@Value("${app.jwt.secret}") String secret,
-                      @Value("${app.jwt.expiration-seconds:3600}") long expirationSeconds) {
-        if (secret == null || secret.getBytes(StandardCharsets.UTF_8).length < 32) {
-            throw new IllegalStateException("JWT secret must be at least 32 bytes long.");
-        }
-        this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-        this.expirationSeconds = expirationSeconds;
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.jwtAuthenticationFilter=jwtAuthenticationFilter;
     }
 
-    public String generateToken(UserAccount user) {
-        Instant now = Instant.now();
-        return Jwts.builder()
-                .subject(user.getEmail())
-                .claim("uid", user.getId().toString())
-                .claim("name", user.getName())
-                .claim("role", user.getRole())
-                .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plusSeconds(expirationSeconds)))
-                .signWith(signingKey)
-                .compact();
+    @Bean
+    PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(12); }
+
+    @Bean
+    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http.csrf(csrf->csrf.disable())
+            .cors(cors->{})
+            .sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth->auth
+                    .requestMatchers(HttpMethod.OPTIONS,"/**").permitAll()
+                    .requestMatchers("/api/auth/login","/error").permitAll()
+                    .anyRequest().authenticated())
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
     }
 
-    public Claims parseClaims(String token) {
-        return Jwts.parser().verifyWith(signingKey).build().parseSignedClaims(token).getPayload();
-    }
+    @Bean
+    CorsConfigurationSource corsConfigurationSource(
+            @Value("${app.frontend-url:http://localhost:5173}") String frontendUrl) {
+        CorsConfiguration c=new CorsConfiguration();
+        c.setAllowedOrigins(List.of(frontendUrl));
+        c.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
+        c.setAllowedHeaders(List.of("Authorization","Content-Type","Accept"));
+        c.setAllowCredentials(true);
 
-    public String extractEmail(String token) { return parseClaims(token).getSubject(); }
-    public long getExpirationSeconds() { return expirationSeconds; }
+        UrlBasedCorsConfigurationSource source=new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", c);
+        return source;
+    }
 }
