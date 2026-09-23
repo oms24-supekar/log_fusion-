@@ -1,2 +1,43 @@
-import {Route,Routes} from 'react-router-dom';import Layout from './components/Layout';import Overview from './pages/Overview';import Ingest from './pages/Ingest';import Logs from './pages/Logs';import LogDetails from './pages/LogDetails';import AIReview from './pages/AIReview';import Parsers from './pages/Parsers';import AIEngine from './pages/AIEngine';import Pipeline from './pages/Pipeline';import Analytics from './pages/Analytics';import Health from './pages/Health';import Settings from './pages/Settings';
-export default function App(){return <Routes><Route element={<Layout/>}><Route path="/" element={<Overview/>}/><Route path="/ingest" element={<Ingest/>}/><Route path="/logs" element={<Logs/>}/><Route path="/logs/:id" element={<LogDetails/>}/><Route path="/ai-review" element={<AIReview/>}/><Route path="/parsers" element={<Parsers/>}/><Route path="/ai-engine" element={<AIEngine/>}/><Route path="/pipeline" element={<Pipeline/>}/><Route path="/analytics" element={<Analytics/>}/><Route path="/health" element={<Health/>}/><Route path="/settings" element={<Settings/>}/></Route></Routes>}
+import { Navigate, Route, Routes } from "react-router-dom";
+
+import Layout from "./components/Layout";
+import ProtectedRoute from "./auth/ProtectedRoute";
+
+import Login from "./pages/Login";
+import Overview from "./pages/Overview";
+import Ingest from "./pages/Ingest";
+import Logs from "./pages/Logs";
+import LogDetails from "./pages/LogDetails";
+import AIReview from "./pages/AIReview";
+import Parsers from "./pages/Parsers";
+import AIEngine from "./pages/AIEngine";
+import Pipeline from "./pages/Pipeline";
+import Analytics from "./pages/Analytics";
+import Health from "./pages/Health";
+import Settings from "./pages/Settings";
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+
+      <Route element={<ProtectedRoute />}>
+        <Route element={<Layout />}>
+          <Route path="/" element={<Overview />} />
+          <Route path="/ingest" element={<Ingest />} />
+          <Route path="/logs" element={<Logs />} />
+          <Route path="/logs/:id" element={<LogDetails />} />
+          <Route path="/ai-review" element={<AIReview />} />
+          <Route path="/parsers" element={<Parsers />} />
+          <Route path="/ai-engine" element={<AIEngine />} />
+          <Route path="/pipeline" element={<Pipeline />} />
+          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/health" element={<Health />} />
+          <Route path="/settings" element={<Settings />} />
+        </Route>
+      </Route>
+
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
