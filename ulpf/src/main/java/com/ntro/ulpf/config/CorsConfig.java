@@ -19,9 +19,10 @@ public class CorsConfig {
             public void addCorsMappings(CorsRegistry registry) {
                 registry
                         .addMapping("/api/**")
-                        .allowedOrigins(
-                                "http://localhost:5173",
-                                frontendUrl
+                        .allowedOriginPatterns(
+                                "http://localhost:*",
+                                frontendUrl,
+                                "https://*.vercel.app"
                         )
                         .allowedMethods(
                                 "GET",
