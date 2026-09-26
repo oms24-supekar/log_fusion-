@@ -18,38 +18,80 @@ import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
     private final JwtService jwtService;
     private final UserAccountRepository userRepository;
 
-    public JwtAuthenticationFilter(JwtService jwtService, UserAccountRepository userRepository) {
-        this.jwtService=jwtService; this.userRepository=userRepository;
+    public JwtAuthenticationFilter(
+            JwtService jwtService,
+            UserAccountRepository userRepository
+    ) {
+        this.jwtService = jwtService;
+        this.userRepository = userRepository;
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
-            throws ServletException, IOException {
-        String header=request.getHeader("Authorization");
-        if (header==null || !header.startsWith("Bearer ")) {
-            chain.doFilter(request,response);
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+
+        String path = request.getServletPath();
+
+        return request.getMethod().equalsIgnoreCase("OPTIONS")
+                || path.equals("/api/auth/login")
+                || path.equals("/error");
+    }
+
+    @Override
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain chain
+    ) throws ServletException, IOException {
+
+        String header = request.getHeader("Authorization");
+
+        // No JWT supplied -> let Spring Security decide
+        if (header == null || !header.startsWith("Bearer ")) {
+            chain.doFilter(request, response);
             return;
         }
 
         try {
-            String email=jwtService.extractEmail(header.substring(7));
-            if (email!=null && SecurityContextHolder.getContext().getAuthentication()==null) {
-                UserAccount user=userRepository.findByEmailIgnoreCase(email).orElse(null);
-                if (user!=null && user.isEnabled()) {
-                    var auth=new UsernamePasswordAuthenticationToken(
-                            user.getEmail(), null,
-                            List.of(new SimpleGrantedAuthority("ROLE_"+user.getRole().toUpperCase()))
-                    );
-                    SecurityContextHolder.getContext().setAuthentication(auth);
+
+            String token = header.substring(7);
+            String email = jwtService.extractEmail(token);
+
+            if (email != null &&
+                    SecurityContextHolder.getContext().getAuthentication() == null) {
+
+                UserAccount user =
+                        userRepository.findByEmailIgnoreCase(email)
+                                .orElse(null);
+
+                if (user != null && user.isEnabled()) {
+
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    user.getEmail(),
+                                    null,
+                                    List.of(
+                                            new SimpleGrantedAuthority(
+                                                    "ROLE_" +
+                                                    user.getRole().toUpperCase()
+                                            )
+                                    )
+                            );
+
+                    SecurityContextHolder
+                            .getContext()
+                            .setAuthentication(authentication);
                 }
             }
-        } catch (JwtException | IllegalArgumentException ignored) {
+
+        } catch (JwtException | IllegalArgumentException e) {
+
             SecurityContextHolder.clearContext();
         }
 
-        chain.doFilter(request,response);
+        chain.doFilter(request, response);
     }
 }
