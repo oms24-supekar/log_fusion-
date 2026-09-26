@@ -61,6 +61,16 @@ public class NormalizationValidationService {
                 invalidChecks++;
             }
         }
+        if (hasField(fields, "source_port")) {
+
+    Object portValue =
+            fields.get("source_port");
+
+    if (!isValidPort(portValue)) {
+
+        invalidChecks++;
+    }
+}
 
         if (hasField(fields, "severity")) {
             String severity = getString(fields, "severity");
@@ -77,8 +87,8 @@ public class NormalizationValidationService {
         }
 
         if (invalidChecks > 0) {
-            return ValidationStatus.INVALID;
-        }
+    return ValidationStatus.PARTIAL;
+}
 
         if (partialChecks > 0 || fields.size() < 3) {
             return ValidationStatus.PARTIAL;

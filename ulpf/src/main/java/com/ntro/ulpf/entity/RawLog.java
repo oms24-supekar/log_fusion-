@@ -1,12 +1,12 @@
 package com.ntro.ulpf.entity;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "raw_logs")
@@ -15,10 +15,20 @@ public class RawLog {
     @Id
     private UUID id;
 
-    @Column(name = "raw_content", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "batch_id")
+    private UUID batchId;
+
+    @Column(
+            name = "raw_content",
+            nullable = false,
+            columnDefinition = "TEXT"
+    )
     private String rawContent;
 
-    @Column(name = "source_name", nullable = false)
+    @Column(
+            name = "source_name",
+            nullable = false
+    )
     private String sourceName;
 
     @Column(name = "source_type")
@@ -27,13 +37,23 @@ public class RawLog {
     @Column(name = "detected_format")
     private String detectedFormat;
 
-    @Column(name = "sha256_hash", nullable = false, length = 64)
+    @Column(
+            name = "sha256_hash",
+            nullable = false,
+            length = 64
+    )
     private String sha256Hash;
 
-    @Column(name = "received_at", nullable = false)
+    @Column(
+            name = "received_at",
+            nullable = false
+    )
     private LocalDateTime receivedAt;
 
-    @Column(name = "processing_status", nullable = false)
+    @Column(
+            name = "processing_status",
+            nullable = false
+    )
     private String processingStatus;
 
     public RawLog() {
@@ -59,19 +79,58 @@ public class RawLog {
         this.processingStatus = processingStatus;
     }
 
+    /*
+     * Optional constructor for batch-ingested logs.
+     */
+    public RawLog(
+            UUID id,
+            UUID batchId,
+            String rawContent,
+            String sourceName,
+            String sourceType,
+            String detectedFormat,
+            String sha256Hash,
+            LocalDateTime receivedAt,
+            String processingStatus
+    ) {
+        this.id = id;
+        this.batchId = batchId;
+        this.rawContent = rawContent;
+        this.sourceName = sourceName;
+        this.sourceType = sourceType;
+        this.detectedFormat = detectedFormat;
+        this.sha256Hash = sha256Hash;
+        this.receivedAt = receivedAt;
+        this.processingStatus = processingStatus;
+    }
+
     public UUID getId() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setId(
+            UUID id
+    ) {
         this.id = id;
+    }
+
+    public UUID getBatchId() {
+        return batchId;
+    }
+
+    public void setBatchId(
+            UUID batchId
+    ) {
+        this.batchId = batchId;
     }
 
     public String getRawContent() {
         return rawContent;
     }
 
-    public void setRawContent(String rawContent) {
+    public void setRawContent(
+            String rawContent
+    ) {
         this.rawContent = rawContent;
     }
 
@@ -79,7 +138,9 @@ public class RawLog {
         return sourceName;
     }
 
-    public void setSourceName(String sourceName) {
+    public void setSourceName(
+            String sourceName
+    ) {
         this.sourceName = sourceName;
     }
 
@@ -87,7 +148,9 @@ public class RawLog {
         return sourceType;
     }
 
-    public void setSourceType(String sourceType) {
+    public void setSourceType(
+            String sourceType
+    ) {
         this.sourceType = sourceType;
     }
 
@@ -95,7 +158,9 @@ public class RawLog {
         return detectedFormat;
     }
 
-    public void setDetectedFormat(String detectedFormat) {
+    public void setDetectedFormat(
+            String detectedFormat
+    ) {
         this.detectedFormat = detectedFormat;
     }
 
@@ -103,7 +168,9 @@ public class RawLog {
         return sha256Hash;
     }
 
-    public void setSha256Hash(String sha256Hash) {
+    public void setSha256Hash(
+            String sha256Hash
+    ) {
         this.sha256Hash = sha256Hash;
     }
 
@@ -111,7 +178,9 @@ public class RawLog {
         return receivedAt;
     }
 
-    public void setReceivedAt(LocalDateTime receivedAt) {
+    public void setReceivedAt(
+            LocalDateTime receivedAt
+    ) {
         this.receivedAt = receivedAt;
     }
 
@@ -119,7 +188,9 @@ public class RawLog {
         return processingStatus;
     }
 
-    public void setProcessingStatus(String processingStatus) {
+    public void setProcessingStatus(
+            String processingStatus
+    ) {
         this.processingStatus = processingStatus;
     }
 }
