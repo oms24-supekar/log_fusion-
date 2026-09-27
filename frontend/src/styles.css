@@ -257,9 +257,38 @@ pre {
 
 .content {
   min-width: 0;
-  background: var(--background);
+  min-height: 100vh;
+
+  /* Light theme — original artwork */
+  background-color: var(--background);
+  background-image:
+    linear-gradient(
+      rgba(255, 255, 255, 0.72),
+      rgba(255, 255, 255, 0.72)
+    ),
+    url("/logfusion-bg.png");
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
+/* Dark theme — same artwork, heavily darkened */
+html.dark .content {
+  background-color: #000000;
+  background-image:
+    linear-gradient(
+      rgba(0, 0, 0, 0.78),
+      rgba(0, 0, 0, 0.78)
+    ),
+    url("/logfusion-bg.png");
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
 .topbar {
   position: sticky;
   top: 0;
