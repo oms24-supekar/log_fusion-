@@ -1,0 +1,15 @@
+Sep 22 16:20:01 linux-01 sshd[4412]: Failed password for admin from 192.168.1.44 port 52210 ssh2
+action=ALLOW src=10.0.0.2 dst=10.0.0.5 dpt=443 protocol=TCP
+{"timestamp":"2026-09-22T16:20:03","host":"app-01","severity":"ERROR","message":"Database timeout","source_ip":"10.1.1.20"}
+CEF:0|AcmeSec|FirewallX|2.1|901|Outbound connection blocked|7|src=10.8.0.5 dst=8.8.8.8 dpt=53 proto=UDP
+LEEF:2.0|VendorX|Gateway|4.0|AUTH_FAIL|src=10.90.1.5user=aliceaction=deny
+RAVEN#201~node201~user201~10.44.7.201~AUTHBLOCK
+MYSTERY_EVT@@host=beta-seven@@usr=om@@addr=192.168.77.21@@auth=no
+NEBULA::identity=karan::device=firewall::src=172.16.4.8::decision=deny
+sensor-alpha :: 2026/09/22 16:20:09 :: identity=john :: address=10.55.2.91 :: event=login_rejected
+ZXQ991_AF7_RAWBLOCK_NO_KNOWN_SCHEMA
+Sep 22 BROKEN_TIME server02 sshd login denied user=test source=192.168.4.18
+{"timestamp":"2026-09-22T16:20:12","host":"app-02","severity":"WARN","message":"Missing closing brace"
+CEF:0|BrokenVendor|OddProduct|1.0|404|Weird event|5|src=10.1.2.3 dst
+action=DENY src=192.168.10.9 dst=10.0.0.9 dpt=22 protocol=TCP
+Sep 22 16:20:15 db-01 postgres[1201]: connection rejected for user report from 10.2.3.4

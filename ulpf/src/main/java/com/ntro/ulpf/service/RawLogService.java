@@ -1,34 +1,27 @@
 package com.ntro.ulpf.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.UUID;
 
+import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ntro.ulpf.detection.FormatDetector;
 import com.ntro.ulpf.detection.LogFormat;
-
 import com.ntro.ulpf.dto.LogRequest;
 import com.ntro.ulpf.dto.LogResponse;
-
 import com.ntro.ulpf.entity.NormalizedLog;
 import com.ntro.ulpf.entity.RawLog;
-
 import com.ntro.ulpf.normalization.NormalizationEngine;
 import com.ntro.ulpf.normalization.UniversalEvent;
-
 import com.ntro.ulpf.parser.DynamicParseResult;
 import com.ntro.ulpf.parser.LogParser;
 import com.ntro.ulpf.parser.ParsedLog;
 import com.ntro.ulpf.parser.ParserRegistry;
-
 import com.ntro.ulpf.repository.NormalizedLogRepository;
 import com.ntro.ulpf.repository.RawLogRepository;
-
 import com.ntro.ulpf.util.HashUtil;
-
-import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
-import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class RawLogService {
@@ -38,9 +31,11 @@ public class RawLogService {
     private final NormalizedLogRepository
             normalizedLogRepository;
 
-    private final FormatDetector formatDetector;
+    private final FormatDetector
+            formatDetector;
 
-    private final ParserRegistry parserRegistry;
+    private final ParserRegistry
+            parserRegistry;
 
     private final NormalizationEngine
             normalizationEngine;
@@ -109,6 +104,11 @@ public class RawLogService {
                         ? request.receivedAt()
                         : LocalDateTime.now();
 
+        /*
+         * =====================================================
+         * FORMAT DETECTION
+         * =====================================================
+         */
         LogFormat detectedFormat =
                 formatDetector.detect(
                         request.rawContent()
@@ -120,6 +120,11 @@ public class RawLogService {
                         ? "NEEDS_REVIEW"
                         : "DETECTED";
 
+        /*
+         * =====================================================
+         * PRESERVE RAW FORENSIC EVIDENCE
+         * =====================================================
+         */
         RawLog rawLog =
                 new RawLog(
                         id,
@@ -133,13 +138,36 @@ public class RawLogService {
                 );
 
         /*
-         * Preserve forensic evidence FIRST.
+         * Batch traceability.
+         *
+         * Normal single-log requests simply have batchId = null.
          */
+        rawLog.setBatchId(
+                request.batchId()
+        );
+
         RawLog savedLog =
-                rawLogRepository.save(rawLog);
+                rawLogRepository.save(
+                        rawLog
+                );
 
         /*
-         * Known deterministic format.
+         * =====================================================
+         * KNOWN FORMAT
+         * =====================================================
+         *
+         * Fast path:
+         *
+         * JSON
+         * SYSLOG
+         * CEF
+         * KEY_VALUE
+         * etc.
+         *
+         * If the deterministic parser fails,
+         * DO NOT immediately mark FAILED.
+         *
+         * Route to AI instead.
          */
         if (detectedFormat
                 != LogFormat.UNKNOWN) {
@@ -163,20 +191,31 @@ public class RawLogService {
                                 .getSimpleName()
                 );
 
-            } catch (Exception e) {
+            } catch (Exception parserException) {
 
-                return markFailed(
-                        savedLog,
-                        e
+                System.out.println(
+                        "Deterministic parser failed for "
+                                + savedLog.getId()
+                                + " ["
+                                + detectedFormat
+                                + "]"
+                                + " → routing to AI. Reason: "
+                                + parserException.getMessage()
+                );
+
+                return routeToAi(
+                        savedLog
                 );
             }
         }
 
         /*
+         * =====================================================
          * UNKNOWN FORMAT
+         * =====================================================
          *
-         * Check whether a previously approved
-         * dynamic parser can understand it.
+         * First try any previously learned / approved
+         * dynamic parser.
          */
         try {
 
@@ -207,23 +246,101 @@ public class RawLogService {
 
                 String parserUsed =
                         "Dynamic:"
-                                + result.definition()
-                                        .getName();
+                                + result
+                                .definition()
+                                .getName();
 
-                return processParsedLog(
-                        savedLog,
-                        result.parsedLog(),
-                        parserUsed
-                );
+                try {
+
+                    return processParsedLog(
+                            savedLog,
+                            result.parsedLog(),
+                            parserUsed
+                    );
+
+                } catch (Exception dynamicFailure) {
+
+                    System.out.println(
+                            "Dynamic parser failed for "
+                                    + savedLog.getId()
+                                    + " → routing to AI."
+                    );
+
+                    return routeToAi(
+                            savedLog
+                    );
+                }
             }
 
+            /*
+             * No dynamic parser matched.
+             *
+             * AutomaticNormalizationService can:
+             *
+             * 1. inspect deterministic structure
+             * 2. auto-approve if confident
+             * 3. otherwise queue to Kafka / AI
+             */
             return automaticNormalizationService
-                    .process(savedLog);
+                    .process(
+                            savedLog
+                    );
 
         } catch (Exception e) {
 
+            /*
+             * Even dynamic analysis itself failed.
+             *
+             * AI becomes the final normalization fallback.
+             */
+            System.out.println(
+                    "Unknown-log analysis failed for "
+                            + savedLog.getId()
+                            + " → routing directly to AI. Reason: "
+                            + e.getMessage()
+            );
+
+            return routeToAi(
+                    savedLog
+            );
+        }
+    }
+
+    /*
+     * =========================================================
+     * UNIVERSAL AI FALLBACK
+     * =========================================================
+     *
+     * Any deterministic parser failure can land here.
+     *
+     * Known format failure
+     * Dynamic parser failure
+     * Unknown structure
+     * Weird vendor variation
+     * Malformed but understandable telemetry
+     *
+     * → Kafka
+     * → Ollama/Qwen
+     */
+    private LogResponse routeToAi(
+            RawLog rawLog
+    ) {
+
+        try {
+
+            return automaticNormalizationService
+                    .queueDirectlyForAi(
+                            rawLog
+                    );
+
+        } catch (Exception e) {
+
+            /*
+             * Only mark FAILED if even AI queueing
+             * itself cannot be started.
+             */
             return markFailed(
-                    savedLog,
+                    rawLog,
                     e
             );
         }
@@ -231,16 +348,11 @@ public class RawLogService {
 
     /*
      * =========================================================
-     * REPROCESS AN EXISTING UNKNOWN LOG
+     * REPROCESS EXISTING LOG
      * =========================================================
      *
-     * Used after a human approves an AI/deterministic mapping
-     * and a new dynamic parser definition has been created.
-     *
-     * IMPORTANT:
-     * We DO NOT create another RawLog.
-     *
-     * The same forensic raw-log UUID is reused.
+     * Used after a reusable dynamic parser has been learned
+     * or approved.
      */
     public LogResponse reprocessDynamicLog(
             UUID rawLogId
@@ -248,23 +360,29 @@ public class RawLogService {
 
         RawLog savedLog =
                 rawLogRepository
-                        .findById(rawLogId)
-                        .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "Raw log not found: "
-                                                + rawLogId
-                                )
+                        .findById(
+                                rawLogId
+                        )
+                        .orElseThrow(
+                                () ->
+                                        new IllegalArgumentException(
+                                                "Raw log not found: "
+                                                        + rawLogId
+                                        )
                         );
 
         /*
-         * Safety check:
-         * don't normalize the same raw log twice.
+         * Never normalize the same raw log twice.
          */
         if (normalizedLogRepository
-                .findByRawLog_Id(rawLogId)
+                .findByRawLog_Id(
+                        rawLogId
+                )
                 .isPresent()) {
 
-            return toResponse(savedLog);
+            return toResponse(
+                    savedLog
+            );
         }
 
         try {
@@ -273,13 +391,15 @@ public class RawLogService {
                     dynamicResult =
                     dynamicParserService
                             .tryParse(
-                                    savedLog.getRawContent()
+                                    savedLog
+                                            .getRawContent()
                             );
 
             /*
-             * Still no matching parser.
+             * No learned parser matches.
              *
-             * Keep it in the review queue.
+             * Do not leave it stuck in NEEDS_REVIEW.
+             * Let AI attempt normalization.
              */
             if (dynamicResult.isEmpty()) {
 
@@ -287,21 +407,16 @@ public class RawLogService {
                         LogFormat.UNKNOWN.name()
                 );
 
-                savedLog.setProcessingStatus(
-                        "NEEDS_REVIEW"
-                );
-
                 savedLog =
                         rawLogRepository.save(
                                 savedLog
                         );
 
-                return toResponse(savedLog);
+                return routeToAi(
+                        savedLog
+                );
             }
 
-            /*
-             * Matching dynamic parser found.
-             */
             DynamicParseResult result =
                     dynamicResult.get();
 
@@ -320,93 +435,95 @@ public class RawLogService {
 
             String parserUsed =
                     "Dynamic:"
-                            + result.definition()
-                                    .getName();
+                            + result
+                            .definition()
+                            .getName();
 
-            /*
-             * Normalize the ORIGINAL stored raw log.
-             */
-            return processParsedLog(
-                    savedLog,
-                    result.parsedLog(),
-                    parserUsed
-            );
+            try {
+
+                return processParsedLog(
+                        savedLog,
+                        result.parsedLog(),
+                        parserUsed
+                );
+
+            } catch (Exception parserFailure) {
+
+                return routeToAi(
+                        savedLog
+                );
+            }
 
         } catch (Exception e) {
 
-            return markFailed(
-                    savedLog,
-                    e
+            return routeToAi(
+                    savedLog
             );
         }
     }
 
     /*
      * =========================================================
-     * NORMALIZATION + NORMALIZED STORAGE
+     * NORMALIZATION + STORAGE
      * =========================================================
      */
     private LogResponse processParsedLog(
             RawLog savedLog,
             ParsedLog parsedLog,
             String parserUsed
-    ) {
+    ) throws Exception {
 
-        try {
+        UniversalEvent universalEvent =
+                normalizationEngine
+                        .normalize(
+                                savedLog,
+                                parsedLog,
+                                parserUsed
+                        );
 
-            UniversalEvent universalEvent =
-                    normalizationEngine.normalize(
-                            savedLog,
-                            parsedLog,
-                            parserUsed
-                    );
+        String normalizedJson =
+                objectMapper
+                        .writeValueAsString(
+                                universalEvent
+                        );
 
-            String normalizedJson =
-                    objectMapper
-                            .writeValueAsString(
-                                    universalEvent
-                            );
+        NormalizedLog normalizedLog =
+                new NormalizedLog(
+                        universalEvent.eventId(),
+                        savedLog,
+                        normalizedJson,
+                        parserUsed,
+                        universalEvent
+                                .metadata()
+                                .processedAt(),
+                        "VALID"
+                );
 
-            NormalizedLog normalizedLog =
-                    new NormalizedLog(
-                            universalEvent.eventId(),
-                            savedLog,
-                            normalizedJson,
-                            parserUsed,
-                            universalEvent
-                                    .metadata()
-                                    .processedAt(),
-                            "VALID"
-                    );
+        normalizedLogRepository.save(
+                normalizedLog
+        );
 
-            normalizedLogRepository.save(
-                    normalizedLog
-            );
+        savedLog.setProcessingStatus(
+                "NORMALIZED"
+        );
 
-            savedLog.setProcessingStatus(
-                    "NORMALIZED"
-            );
+        savedLog =
+                rawLogRepository.save(
+                        savedLog
+                );
 
-            savedLog =
-                    rawLogRepository.save(
-                            savedLog
-                    );
-
-            return toResponse(savedLog);
-
-        } catch (Exception e) {
-
-            return markFailed(
-                    savedLog,
-                    e
-            );
-        }
+        return toResponse(
+                savedLog
+        );
     }
 
     /*
      * =========================================================
-     * FAILURE HANDLING
+     * FINAL FAILURE
      * =========================================================
+     *
+     * We reach this only if the normal pipeline AND
+     * AI fallback cannot proceed.
      */
     private LogResponse markFailed(
             RawLog savedLog,
@@ -423,18 +540,20 @@ public class RawLogService {
                 );
 
         System.err.println(
-                "Log processing failed for "
+                "Log processing permanently failed for "
                         + savedLog.getId()
                         + ": "
                         + exception.getMessage()
         );
 
-        return toResponse(savedLog);
+        return toResponse(
+                savedLog
+        );
     }
 
     /*
      * =========================================================
-     * RESPONSE MAPPER
+     * RESPONSE
      * =========================================================
      */
     private LogResponse toResponse(

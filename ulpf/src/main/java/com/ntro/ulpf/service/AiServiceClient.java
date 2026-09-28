@@ -1,9 +1,9 @@
 package com.ntro.ulpf.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 
-import com.ntro.ulpf.dto.AiMappingResponse;
-import com.ntro.ulpf.dto.AiMappingSuggestion;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -12,144 +12,113 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
+import com.ntro.ulpf.dto.AiMappingSuggestion;
 
+import java.util.ArrayList;
+import java.util.List;
 @Service
 public class AiServiceClient {
 
-    private final String aiServiceUrl;
+    private final String ollamaUrl;
+    private final String model;
 
     private final HttpClient httpClient;
-
     private final ObjectMapper objectMapper;
 
     public AiServiceClient(
-            @Value("${ai.service.url}")
-            String aiServiceUrl
+            @Value("${ollama.url:http://localhost:11434}")
+            String ollamaUrl,
+
+            @Value("${ollama.model:qwen2.5:3b}")
+            String model
     ) {
 
-        this.aiServiceUrl =
-                aiServiceUrl;
+        this.ollamaUrl = ollamaUrl;
+        this.model = model;
 
-        this.httpClient =
-                HttpClient.newBuilder()
-                        .connectTimeout(
-                                Duration.ofSeconds(5)
-                        )
-                        .build();
+        this.httpClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(5))
+                .build();
 
-        this.objectMapper =
-                new ObjectMapper()
-                        .findAndRegisterModules();
+        this.objectMapper = new ObjectMapper()
+                .findAndRegisterModules();
     }
 
-    public List<AiMappingSuggestion> suggestMappings(
-            String rawLog,
-            Map<String, Object> extractedFields
-    ) {
+    public Map<String, Object> normalizeLog(String rawLog) {
 
         try {
 
-            /*
-             * Build the list of fields that will
-             * be sent to the Python AI service.
-             */
-            List<Map<String, Object>> candidates =
-                    new ArrayList<>();
+            String prompt = """
+                    You are a cybersecurity log normalization engine.
 
-            for (Map.Entry<String, Object> entry
-                    : extractedFields.entrySet()) {
+                    Convert the supplied raw log into structured JSON.
 
-                String fieldName =
-                        entry.getKey();
+                    IMPORTANT RULES:
 
-                /*
-                 * Ignore token0, token2, token3...
-                 *
-                 * token1 is kept because it often
-                 * represents an action/event.
-                 */
-                if (fieldName.startsWith("token")
-                        && !fieldName.equals("token1")) {
+                    1. Return ONLY JSON.
+                    2. Do not use markdown.
+                    3. Never invent values.
+                    4. If a value does not exist in the log, use null.
+                    5. Do not infer destination IP, destination port,
+                       severity, username, protocol, or other fields
+                       unless directly supported by the log.
+                    6. Keep IP addresses exactly as they appear.
+                    7. Ports must be numbers or null.
 
-                    continue;
-                }
+                    Return exactly these fields:
 
-                Map<String, Object> candidate =
-                        new LinkedHashMap<>();
+                    timestamp
+                    host
+                    source_type
+                    service
+                    action
+                    severity
+                    username
+                    source_ip
+                    source_port
+                    destination_ip
+                    destination_port
+                    protocol
+                    outcome
+                    message
 
-                candidate.put(
-                        "field_name",
-                        fieldName
-                );
+                    RAW LOG:
+                    """ + rawLog;
 
-                candidate.put(
-                        "sample_value",
-                        entry.getValue() == null
-                                ? ""
-                                : String.valueOf(
-                                        entry.getValue()
-                                )
-                );
-
-                candidates.add(candidate);
-            }
-
-            /*
-             * Build the exact FastAPI payload.
-             */
-            Map<String, Object> payload =
+            Map<String, Object> body =
                     new LinkedHashMap<>();
 
-            payload.put(
-                    "raw_log",
-                    rawLog
-            );
+            body.put("model", model);
+            body.put("prompt", prompt);
+            body.put("stream", false);
+            body.put("format", "json");
 
-            payload.put(
-                    "extracted_fields",
-                    candidates
-            );
+            Map<String, Object> options =
+                    new LinkedHashMap<>();
 
-            /*
-             * Convert the Java Map into REAL JSON.
-             */
+            options.put("temperature", 0);
+
+            body.put("options", options);
+
             String jsonBody =
-                    objectMapper
-                            .writeValueAsString(
-                                    payload
-                            );
+                    objectMapper.writeValueAsString(body);
 
-            System.out.println(
-                    "AI REQUEST JSON: "
-                            + jsonBody
-            );
-
-            /*
-             * Send the JSON explicitly.
-             */
             HttpRequest request =
                     HttpRequest.newBuilder()
                             .uri(
                                     URI.create(
-                                            aiServiceUrl
-                                                    + "/ai/suggest-mapping"
+                                            ollamaUrl
+                                                    + "/api/generate"
                                     )
                             )
                             .timeout(
-                                    Duration.ofSeconds(10)
+                                    Duration.ofSeconds(60)
                             )
                             .header(
                                     "Content-Type",
-                                    "application/json"
-                            )
-                            .header(
-                                    "Accept",
                                     "application/json"
                             )
                             .POST(
@@ -165,57 +134,213 @@ public class AiServiceClient {
                                     .ofString()
                     );
 
-            System.out.println(
-                    "AI STATUS CODE: "
-                            + response.statusCode()
-            );
-
-            System.out.println(
-                    "AI RESPONSE JSON: "
-                            + response.body()
-            );
-
-            /*
-             * Anything outside 2xx means
-             * the AI request failed.
-             */
             if (response.statusCode() < 200
                     || response.statusCode() >= 300) {
 
                 throw new RuntimeException(
-                        "AI service returned HTTP "
+                        "Ollama returned HTTP "
                                 + response.statusCode()
-                                + ": "
-                                + response.body()
                 );
             }
 
-            AiMappingResponse aiResponse =
-                    objectMapper.readValue(
-                            response.body(),
-                            AiMappingResponse.class
+            JsonNode root =
+                    objectMapper.readTree(
+                            response.body()
                     );
 
-            if (aiResponse == null
-                    || aiResponse.suggestions()
-                    == null) {
+            String modelResponse =
+                    root.path("response")
+                            .asText();
 
-                return List.of();
+            if (modelResponse == null
+                    || modelResponse.isBlank()) {
+
+                throw new RuntimeException(
+                        "Ollama returned empty response"
+                );
             }
 
-            return aiResponse.suggestions();
+            Map<String, Object> normalized =
+                    objectMapper.readValue(
+                            modelResponse,
+                            new TypeReference<
+                                    Map<String, Object>>() {
+                            }
+                    );
+
+            sanitize(normalized);
+
+            return normalized;
 
         } catch (Exception e) {
 
-            System.err.println(
-                    "AI SERVICE ERROR: "
-                            + e.getMessage()
-            );
-
             throw new RuntimeException(
-                    "Failed to call AI service",
+                    "Ollama normalization failed: "
+                            + e.getMessage(),
                     e
             );
         }
     }
+
+    private void sanitize(
+            Map<String, Object> fields
+    ) {
+
+        removeBlank(fields);
+
+        sanitizePort(
+                fields,
+                "source_port"
+        );
+
+        sanitizePort(
+                fields,
+                "destination_port"
+        );
+
+        normalizeCase(
+                fields,
+                "severity"
+        );
+
+        normalizeCase(
+                fields,
+                "protocol"
+        );
+
+        normalizeCase(
+                fields,
+                "outcome"
+        );
+    }
+
+    private void removeBlank(
+            Map<String, Object> fields
+    ) {
+
+        fields.replaceAll(
+                (key, value) -> {
+
+                    if (value == null) {
+                        return null;
+                    }
+
+                    if (value instanceof String string) {
+
+                        String trimmed =
+                                string.trim();
+
+                        if (trimmed.isEmpty()
+                                || trimmed.equalsIgnoreCase(
+                                        "null"
+                                )
+                                || trimmed.equalsIgnoreCase(
+                                        "unknown"
+                                )) {
+
+                            return null;
+                        }
+
+                        return trimmed;
+                    }
+
+                    return value;
+                }
+        );
+    }
+
+    private void sanitizePort(
+            Map<String, Object> fields,
+            String key
+    ) {
+
+        Object value =
+                fields.get(key);
+
+        if (value == null) {
+            return;
+        }
+
+        try {
+
+            int port =
+                    Integer.parseInt(
+                            String.valueOf(value)
+                    );
+
+            if (port < 0
+                    || port > 65535) {
+
+                fields.put(key, null);
+
+            } else {
+
+                fields.put(key, port);
+            }
+
+        } catch (Exception e) {
+
+            fields.put(key, null);
+        }
+    }
+
+    private void normalizeCase(
+            Map<String, Object> fields,
+            String key
+    ) {
+
+        Object value =
+                fields.get(key);
+
+        if (value instanceof String string) {
+
+            fields.put(
+                    key,
+                    string.trim()
+                            .toUpperCase()
+            );
+        }
+    }
+public List<AiMappingSuggestion> suggestMappings(
+        String rawLog,
+        Map<String, Object> extractedFields
+) {
+
+    Map<String, Object> normalized =
+            normalizeLog(rawLog);
+
+    List<AiMappingSuggestion> suggestions =
+            new ArrayList<>();
+
+    for (Map.Entry<String, Object> entry
+            : normalized.entrySet()) {
+
+        String universalField =
+                entry.getKey();
+
+        Object value =
+                entry.getValue();
+
+        if (value == null) {
+            continue;
+        }
+
+        String sourceField =
+                extractedFields.containsKey(universalField)
+                        ? universalField
+                        : "raw_log";
+
+        suggestions.add(
+                new AiMappingSuggestion(
+                        sourceField,
+                        String.valueOf(value),
+                        universalField,
+                        0.85,
+                        "OLLAMA"
+                )
+        );
+    }
+
+    return suggestions;
+}
 }

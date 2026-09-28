@@ -1,0 +1,10 @@
+Sep 21 21:45:01 linux-01 sshd[2221]: Failed password for admin from 192.168.1.44 port 55221 ssh2
+action=ALLOW src=10.0.0.2 dst=10.0.0.5 dpt=443 protocol=TCP
+{"timestamp":"2026-09-21T21:45:03","host":"app-01","severity":"ERROR","message":"Database timeout","source_ip":"10.1.1.20"}
+ZX9! 2026-09-21T21:45:04 omegaNode userKaran 10.44.8.19 authentication denied invalid-password
+RAVEN#91 node=delta9 account=root ip=172.16.7.12 result=blocked reason=policy_violation
+Sep 21 BROKEN_TIME server02 sshd login denied user=test source=192.168.4.18
+CEF:0|AcmeSec|FirewallX|2.1|901|Outbound connection blocked|7|src=10.8.0.5 dst=8.8.8.8 dpt=53 proto=UDP
+sensor-alpha :: 2026/09/21 21:45:08 :: identity=john :: address=10.55.2.91 :: event=login_rejected
+LEEF:2.0|VendorX|Gateway|4.0|AUTH_FAIL|src=10.90.1.5    user=alice    action=deny
+MYSTERY_EVT@@host=beta-seven@@usr=om@@addr=192.168.77.21@@auth=no@@code=X71

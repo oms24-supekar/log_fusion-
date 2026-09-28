@@ -1,25 +1,20 @@
 package com.ntro.ulpf;
 
-import com.ntro.ulpf.entity.ParserCreationMode;
-import com.ntro.ulpf.entity.ParserDefinition;
-import com.ntro.ulpf.repository.ParserDefinitionRepository;
+import com.ntro.ulpf.service.LogStructureFingerprintService;
 import com.ntro.ulpf.service.NormalizationConfidenceService;
-import com.ntro.ulpf.service.ParserLearningService;
-import com.ntro.ulpf.service.ParserMatchingService;
-import org.junit.jupiter.api.Test;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
 
 class AdaptiveNormalizerServiceTest {
 
     @Test
     void autoApprovalThresholdIsConfigurable() {
+
         NormalizationConfidenceService service =
                 new NormalizationConfidenceService(
                         true,
@@ -27,39 +22,132 @@ class AdaptiveNormalizerServiceTest {
                         true
                 );
 
-        assertTrue(service.shouldAutoApprove(0.96));
-        assertFalse(service.shouldAutoApprove(0.90));
-        assertTrue(service.getAutoApproveThreshold() > 0.0);
+        assertTrue(
+                service.shouldAutoApprove(
+                        0.96
+                )
+        );
+
+        assertFalse(
+                service.shouldAutoApprove(
+                        0.90
+                )
+        );
+
+        assertTrue(
+                service.getAutoApproveThreshold()
+                        > 0.0
+        );
     }
 
     @Test
-    void parserMatchingAndLearningUseReliableSignals() {
-        ParserDefinition definition = new ParserDefinition(
-                UUID.randomUUID(),
-                "adaptive-json",
-                "__JSON__",
-                ":",
-                ":",
-                "{\"timestamp\":\"value\",\"source_ip\":\"value\"}",
-                true,
-                0.92,
-                ParserCreationMode.AUTO,
-                9,
-                1,
-                LocalDateTime.now(),
-                LocalDateTime.now()
+    void structurallySimilarLogsProduceSameFingerprint() {
+
+        LogStructureFingerprintService service =
+                new LogStructureFingerprintService();
+
+        String first =
+                "RAVEN#1 node=node1 "
+                        + "account=user1 "
+                        + "ip=10.10.1.1 "
+                        + "result=blocked";
+
+        String second =
+                "RAVEN#2 node=node2 "
+                        + "account=user2 "
+                        + "ip=10.10.1.2 "
+                        + "result=blocked";
+
+        var firstFingerprint =
+                service.analyze(
+                        first
+                );
+
+        var secondFingerprint =
+                service.analyze(
+                        second
+                );
+
+        assertEquals(
+                firstFingerprint.fingerprint(),
+                secondFingerprint.fingerprint()
         );
 
-        ParserMatchingService matchingService = new ParserMatchingService();
-        String rawLog = "{\"timestamp\":\"2026-09-11T12:00:00Z\",\"source_ip\":\"10.0.0.9\",\"severity\":\"INFO\"}";
+        assertEquals(
+                firstFingerprint.canonicalStructure(),
+                secondFingerprint.canonicalStructure()
+        );
+    }
 
-        assertTrue(matchingService.matches(definition, rawLog));
-        assertTrue(matchingService.scoreMatch(definition, rawLog) >= 0.90);
+    @Test
+    void structurallyDifferentLogsProduceDifferentFingerprints() {
 
-        ParserDefinitionRepository repository = mock(ParserDefinitionRepository.class);
-        ParserLearningService learningService = new ParserLearningService(repository);
+        LogStructureFingerprintService service =
+                new LogStructureFingerprintService();
 
-        assertEquals(0.90, learningService.calculateReliability(definition), 0.01);
-        assertTrue(learningService.isReliable(definition));
+        String raven =
+                "RAVEN#1 node=node1 "
+                        + "account=user1 "
+                        + "ip=10.10.1.1 "
+                        + "result=blocked";
+
+        String nebula =
+                "NEBULA::identity=om"
+                        + "::device=firewall"
+                        + "::src=10.10.1.1"
+                        + "::decision=deny";
+
+        var ravenFingerprint =
+                service.analyze(
+                        raven
+                );
+
+        var nebulaFingerprint =
+                service.analyze(
+                        nebula
+                );
+
+        assertNotEquals(
+                ravenFingerprint.fingerprint(),
+                nebulaFingerprint.fingerprint()
+        );
+    }
+
+    @Test
+    void fingerprintDetectsReusableStructureMetadata() {
+
+        LogStructureFingerprintService service =
+                new LogStructureFingerprintService();
+
+        String raw =
+                "MYSTERY_EVT@@host=beta-seven"
+                        + "@@usr=om"
+                        + "@@addr=192.168.77.21"
+                        + "@@auth=no";
+
+        var result =
+                service.analyze(
+                        raw
+                );
+
+        assertEquals(
+                "@@",
+                result.delimiter()
+        );
+
+        assertEquals(
+                "=",
+                result.keyValueSeparator()
+        );
+
+        assertFalse(
+                result.fingerprint()
+                        .isBlank()
+        );
+
+        assertFalse(
+                result.canonicalStructure()
+                        .isBlank()
+        );
     }
 }
