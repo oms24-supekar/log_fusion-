@@ -35,25 +35,39 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
 
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors ->
+                        cors.configurationSource(corsConfigurationSource())
+                )
 
                 .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        session.sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS
+                        )
                 )
 
                 .authorizeHttpRequests(auth -> auth
 
-                        // Allow browser CORS preflight requests
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // Browser CORS preflight
+                        .requestMatchers(
+                                HttpMethod.OPTIONS,
+                                "/**"
+                        ).permitAll()
 
-                        // Public authentication endpoints
-                        .requestMatchers("/api/auth/**").permitAll()
+                        // Public auth endpoints
+                        .requestMatchers(
+                                "/api/auth/**"
+                        ).permitAll()
 
-                        // Allow Spring error endpoint
-                        .requestMatchers("/error").permitAll()
+                        // Public health/error routes
+                        .requestMatchers(
+                                "/api/health",
+                                "/actuator/health",
+                                "/error"
+                        ).permitAll()
 
                         // Everything else requires JWT
-                        .anyRequest().authenticated()
+                        .anyRequest()
+                        .authenticated()
                 )
 
                 .addFilterBefore(
@@ -71,6 +85,7 @@ public class SecurityConfig {
 
         config.setAllowedOriginPatterns(List.of(
                 "http://localhost:*",
+                "https://localhost:*",
                 "https://log-fusion.vercel.app",
                 "https://*.vercel.app"
         ));
@@ -98,13 +113,15 @@ public class SecurityConfig {
 
         config.setAllowCredentials(true);
 
-        // Browser can cache successful preflight
         config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();
 
-        source.registerCorsConfiguration("/**", config);
+        source.registerCorsConfiguration(
+                "/**",
+                config
+        );
 
         return source;
     }
